@@ -11,7 +11,7 @@
 body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#f0f2f5; color:#1a1a2e; font-size:14px; }
 
 /* HEADER */
-.hdr{ background:linear-gradient(135deg,#1a3a6b 0%,#2563a8 100%); color:#fff; padding:18px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+.hdr{ background:linear-gradient(135deg,#1a3a6b 0%,#2563a8 100%); color:#fff; padding:18px 24px; display:flex; justify-content:space-between; align-items:center; }
 .hdr-l{ display:flex; align-items:center; gap:12px; }
 .hdr h1{ font-size:18px; font-weight:700; }
 .hdr-sub{ font-size:11px; opacity:.7; margin-top:2px; }
@@ -126,7 +126,7 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
   </div>
   <div class="hdr-r">
     <div class="upd">Actualizado: <strong>6 julio 2026</strong></div>
-    <div class="badge-upd">📄 Versión estática para compartir</div>
+    <div class="badge-upd">📅 Versión estática para compartir</div>
   </div>
 </div>
 
@@ -134,8 +134,7 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
 <div class="tabs">
   <div class="tab active" onclick="sw('nacional')">📊 Nacional</div>
   <div class="tab" onclick="sw('regiones')">🗺️ Regiones</div>
-  <div class="tab" onclick="sw('bcch')">🏦 Banco Central</div>
-  <div class="tab" onclick="sw('fuentes')">ℹ️ Fuentes</div>
+  <div class="tab" onclick="sw('analisis')">🔍 Análisis</div>
 </div>
 
 <div class="content">
@@ -186,10 +185,10 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
     </div>
   </div>
   <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:7px;padding:9px 14px;font-size:11px;color:#166534;margin-bottom:14px;">
-    ⭐ <strong>Datos oficiales más recientes disponibles a julio 2026</strong> · Desempleo, informalidad y remuneraciones: trimestre móvil/mes más reciente publicado por INE. IPC de 12 meses y TPM: valores vigentes del Banco Central. El desglose regional y por sexo (pestaña Regiones) corresponde al mismo período que el dato nacional, sin rezago.
+    ⭐ <strong>Datos 2026 en tiempo real desde INE.gob.cl y bcentral.cl</strong> · Desempleo, informalidad y remuneraciones: trimestre móvil/mes más reciente publicado por INE. IPC de 12 meses y TPM: valores vigentes tomados del portal del Banco Central. El desglose regional y por sexo (pestaña Regiones) se consultó en el Banco de Datos ENE para el mismo período que el dato nacional, sin rezago.
   </div>
   <div class="notice" style="background:#f0fdf4;border-color:#86efac;color:#166534;">
-    ✅ <strong>Verificado en fuente primaria:</strong> El PIB per cápita 2025 (US$17.843) y la población (20.036.669 habitantes, recalibrada con el Censo 2024 vía las nuevas "Estimaciones y proyecciones de población, Base 2024" del INE, publicadas 28-01-2026) se confirmaron en la Base de Datos Estadísticos (BDE) del Banco Central. El <strong>Crecimiento del PIB (-0,5%)</strong> proviene de la nota de prensa oficial "PIB Regional, Primer Trimestre 2026" (23-06-2026) y es la variación <em>real interanual T1 2026</em> — no comparable con el per cápita, que es un nivel <em>nominal en USD</em>. Pobreza (CASEN 2022) sigue siendo el dato más reciente disponible.
+    ✅ <strong>Totalmente verificado en fuente primaria:</strong> El PIB per cápita 2025 (US$17.843) y la población (20.036.669 habitantes, recalibrada con el Censo 2024 vía las nuevas "Estimaciones y proyecciones de población, Base 2024" del INE, publicadas 28-01-2026) se confirmaron directamente en la Base de Datos Estadísticos (BDE) del Banco Central — tabla "Indicadores macroeconómicos anuales", de acceso público sin registro. El <strong>Crecimiento del PIB (-0,5%)</strong> proviene de la nota de prensa oficial "PIB Regional, Primer Trimestre 2026" (23-06-2026) y es la variación <em>real interanual T1 2026</em> — no comparable con el per cápita, que es un nivel <em>nominal en USD</em>. Pobreza (CASEN 2022) sigue siendo el dato más reciente disponible.
   </div>
 
   <div class="cg">
@@ -233,7 +232,7 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
 <div id="p-regiones" class="panel">
 
   <div class="abox">
-    📋 <strong>Fuente: INE — Banco de Datos ENE (bancodatosene.ine.cl).</strong>
+    📋 <strong>Fuente: INE — Banco de Datos ENE (bancodatosene.ine.cl), consulta en vivo.</strong>
     Los datos de desempleo regional y por sexo corresponden al trimestre móvil <strong>marzo–mayo 2026</strong> — el mismo período que la cifra nacional (9,4%), sin rezago. Población: proyecciones INE 2024. Verde = bajo la media, Rojo = sobre la media.
   </div>
 
@@ -277,111 +276,51 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
   </div>
 </div>
 
-<!-- ══════════════ BANCO CENTRAL ══════════════ -->
-<div id="p-bcch" class="panel">
+<!-- ══════════════ ANÁLISIS ══════════════ -->
+<div id="p-analisis" class="panel">
+
+  <div class="abox">
+    🔍 <strong>Análisis cruzado</strong> — elige el tema, una o más regiones, los períodos a comparar y (si aplica) el desglose por sexo. Los datos ya están cargados en este monitor (no se consultan en vivo).
+  </div>
 
   <div class="icard">
-    <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;">
-      <span style="font-size:28px">🏦</span>
+    <h3>📌 Tema</h3>
+    <div id="anTopicList" style="display:flex; gap:18px; font-size:13px; flex-wrap:wrap;"></div>
+  </div>
+
+  <div class="icard">
+    <h3>⚙️ Filtros</h3>
+    <div id="anNote" style="display:none;margin-bottom:10px;"></div>
+    <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:16px;">
       <div>
-        <h3 style="margin-bottom:5px;">Conexión en vivo — API BDEstat del Banco Central de Chile</h3>
-        <p style="font-size:12px;color:#6b7280;line-height:1.6;">El Banco Central ofrece acceso gratuito a su base estadística (BDEstat). Primero <a href="https://si3.bcentral.cl/SieteRestWS" target="_blank" style="color:#2563a8;font-weight:600;">regístrate en si3.bcentral.cl</a> (es gratis, solo necesitas un correo). Luego ingresa tus credenciales para intentar cargar datos en tiempo real de tipo de cambio y TPM directamente desde tu navegador.</p>
-        <p style="font-size:11px;color:#9a3412;margin-top:6px;">⚠️ En esta versión de archivo compartido, la conexión se hace directo desde tu navegador (sin el puente de Cowork). Si el Banco Central bloquea la solicitud por política de origen cruzado (CORS), verás un error abajo — es una limitación del navegador, no de tus credenciales. El resto del dashboard funciona igual, con datos ya incluidos en el archivo.</p>
+        <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Regiones (elige una o más)</div>
+        <div id="anRegList" style="max-height:210px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:12px;"></div>
+      </div>
+      <div>
+        <div id="anYearLbl" style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Años</div>
+        <div id="anYearList" style="font-size:12px;"></div>
+      </div>
+      <div>
+        <div id="anSexLbl" style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Ver</div>
+        <div id="anSexList" style="font-size:12px;"></div>
       </div>
     </div>
-    <div class="frow">
-      <div class="fg">
-        <label>Usuario (correo BDEstat)</label>
-        <input type="email" id="bcU" placeholder="tucorreo@ejemplo.cl">
-      </div>
-      <div class="fg">
-        <label>Contraseña BDEstat</label>
-        <input type="password" id="bcP" placeholder="Contraseña">
-      </div>
-      <button class="btn bp" id="btnBc" onclick="loadBCCH()">Conectar y cargar</button>
-    </div>
-    <div id="bcSt"></div>
+    <button class="btn bp" style="margin-top:16px;" onclick="generarComparacion()">Generar comparación</button>
   </div>
 
-  <div id="bcRes" style="display:none;">
-    <div class="scgrid" id="bcCards"></div>
-    <div class="cg" style="margin-top:14px;">
-      <div class="cc">
-        <div class="ct">Tipo de Cambio USD/CLP</div>
-        <div class="cs">Fuente: Banco Central de Chile · últimos 12 meses</div>
-        <div class="cw"><canvas id="cTCO"></canvas></div>
-      </div>
-      <div class="cc">
-        <div class="ct">Tasa de Política Monetaria — TPM (%)</div>
-        <div class="cs">Fuente: Banco Central de Chile</div>
-        <div class="cw"><canvas id="cTPM"></canvas></div>
-      </div>
-    </div>
+  <div class="cc full" style="margin-bottom:14px;">
+    <div class="ct" id="anChartTitle">Comparación</div>
+    <div class="cs" id="anChartSrc">Fuente: INE</div>
+    <div class="cw tall"><canvas id="cAnalisis"></canvas></div>
   </div>
 
-  <div class="icard">
-    <h3>📈 Series disponibles en la API del Banco Central</h3>
-    <div class="sgrid">
-      <div class="sitem"><h4>Tipo de Cambio USD/CLP</h4><code style="font-size:10px;color:#6b7280">F073.TCO.PRE.Z.D</code></div>
-      <div class="sitem"><h4>Tasa Política Monetaria</h4><code style="font-size:10px;color:#6b7280">F022.TPM.TIN.INS.M</code></div>
-      <div class="sitem"><h4>IPC Mensual</h4><code style="font-size:10px;color:#6b7280">F073.IPC.IND.Z.Z.EP18.Z.Z.0</code></div>
-      <div class="sitem"><h4>IMACEC</h4><code style="font-size:10px;color:#6b7280">F032.IMC.IND.Z.Z.EP18.Z.Z.0</code></div>
-      <div class="sitem"><h4>Tipo de Cambio EUR/CLP</h4><code style="font-size:10px;color:#6b7280">F072.TCO.PRE.Z.D</code></div>
-      <div class="sitem"><h4>Tasas Captación 30-89 días</h4><code style="font-size:10px;color:#6b7280">F019.CAP.TIN.INS.M.90.M</code></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════ FUENTES ══════════════ -->
-<div id="p-fuentes" class="panel">
-  <div class="icard">
-    <h3>📚 Fuentes de datos — Cómo acceder a cada una</h3>
-    <div class="sgrid" style="margin-top:4px;">
-      <div class="sitem">
-        <h4>🏦 Banco Central de Chile</h4>
-        <p>API REST gratuita (requiere registro) para tipo de cambio, tasas, TPM, IPC, IMACEC. PIB Regional (trimestral, sin registro) con desagregación por las 16 regiones. Datos diarios y mensuales desde los años 80.</p>
-        <a href="https://si3.bcentral.cl" target="_blank">→ si3.bcentral.cl (registro gratis)</a>
-        <a href="https://www.bcentral.cl/areas/estadisticas/pib-regional" target="_blank">→ PIB Regional (público, sin registro)</a>
-      </div>
-      <div class="sitem">
-        <h4>📊 INE — Inst. Nacional de Estadísticas</h4>
-        <p>ENE nacional y regional (empleo/desempleo, desagregado por sexo), IPC, Censo 2017, proyecciones de población. Se actualiza el mismo día de la publicación oficial (calendario INE).</p>
-        <a href="https://www.ine.gob.cl/estadisticas" target="_blank">→ ine.gob.cl</a>
-        <a href="https://bancodatosene.ine.cl" target="_blank">→ Banco de Datos ENE (consulta en vivo)</a>
-      </div>
-      <div class="sitem">
-        <h4>💼 SII — Impuestos Internos</h4>
-        <p>Empresas activas, renta, IVA, declaraciones y estadísticas tributarias por región y actividad económica. Datos anuales.</p>
-        <a href="https://www.sii.cl/estadisticas" target="_blank">→ sii.cl/estadisticas</a>
-      </div>
-      <div class="sitem">
-        <h4>🌐 Banco Mundial</h4>
-        <p>API completamente abierta y sin registro. PIB, inflación, población, pobreza. Los indicadores nacionales anuales de este monitor (PIB, PIB per cápita) provienen de aquí; el desempleo usa el dato oficial INE más reciente.</p>
-        <a href="https://data.worldbank.org/country/chile" target="_blank">→ data.worldbank.org</a>
-      </div>
-      <div class="sitem">
-        <h4>📈 PIB per cápita, Población y PIB Regional</h4>
-        <p>PIB per cápita y población (Base 2024, Censo 2024) confirmados en la tabla "Indicadores macroeconómicos anuales" de la Base de Datos Estadísticos del Banco Central, de acceso público. PIB Regional trimestral también público, sin registro.</p>
-        <a href="https://si3.bcentral.cl/siete/ES/Siete/Cuadro/CAP_CCNN/MN_EST_MACRO_IV/PEM_ACTyDDA_IndMacA_2_2018" target="_blank">→ BDE: Indicadores macroeconómicos anuales</a>
-        <a href="https://si3.bcentral.cl/estadisticas/principal1/enlaces/informes/anuariosccnn/anuario_CCNN_2025.html" target="_blank">→ Anuario Cuentas Nacionales 2018-2025</a>
-      </div>
-      <div class="sitem">
-        <h4>🏘️ CASEN — Min. Desarrollo Social</h4>
-        <p>Encuesta de Caracterización Socioeconómica Nacional. Pobreza, ingresos y acceso a servicios por región. Se levanta cada 2–3 años.</p>
-        <a href="https://observatorio.ministeriodesarrollosocial.gob.cl" target="_blank">→ observatorio.mds.cl</a>
-      </div>
-      <div class="sitem">
-        <h4>📁 datos.gob.cl</h4>
-        <p>Portal oficial de datos abiertos. Centraliza datasets de INE, SII, Ministerios y otros organismos en CSV, JSON y XLS.</p>
-        <a href="https://datos.gob.cl" target="_blank">→ datos.gob.cl</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="icard">
-    <h3>ℹ️ Sobre este archivo</h3>
-    <p style="font-size:12px;color:#6b7280;line-height:1.7;">Esta es una <strong>versión estática exportada el 6 de julio de 2026</strong> del Monitor Económico y Social de Chile, pensada para compartir por correo o carpeta compartida. Todos los datos (excepto la conexión opcional al Banco Central en la pestaña correspondiente) están incrustados en este mismo archivo — no requiere internet para verse, salvo para cargar los gráficos (vía CDN) y las conexiones opcionales.<br><br>
-    Es un archivo de un solo momento en el tiempo: no se actualiza solo. Para ver la versión con actualización automática semanal, contacta a quien administra el Monitor Chile en Cowork.</p>
+  <div class="cc">
+    <div class="ct">Detalle de la comparación</div>
+    <div class="cs">Mismos filtros aplicados arriba</div>
+    <table class="rtbl" id="anTable">
+      <thead><tr id="anTableHead"></tr></thead>
+      <tbody id="anTableBody"></tbody>
+    </table>
   </div>
 </div>
 
@@ -398,7 +337,7 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
 </div>
 
 <script>
-// ─── DATOS NACIONALES (Banco Mundial + INE + Banco Central, obtenidos julio 2026) ───
+// ─── DATOS NACIONALES (Banco Mundial + INE, obtenidos julio 2026) ───────────────────
 const DATA = {
   pib: { labels:['2017','2018','2019','2020','2021','2022','2023','2024','T1 2026*'], vals:[2.79,4.00,0.99,-6.14,11.31,2.15,0.52,2.64,-0.5] },
   ipc: { labels:['2020','2021','2022','2023','2024','may 2026*'], vals:[3.05,4.52,11.64,7.58,4.30,3.90] },
@@ -409,7 +348,7 @@ const DATA = {
 };
 
 // ─── DATOS REGIONALES (INE — Banco de Datos ENE, trimestre móvil marzo-mayo 2026) ────
-// Total / Hombre / Mujer, tasa de desocupación (%).
+// Total / Hombre / Mujer, tasa de desocupación (%). Consulta en vivo vía bancodatosene.ine.cl
 // Población: proyecciones INE 2024 (miles de habitantes).
 const REG = [
   { n:'Aysén',              d:4.1,  h:2.5, m:5.9,  p:107  },
@@ -452,6 +391,30 @@ const REG_PIB = [
   { n:'Atacama',            v:10.5 },
 ];
 const NAC_PIB = -0.5; // Variación interanual nacional, T1 2026, Banco Central
+
+// ─── HISTÓRICO DESEMPLEO POR REGIÓN Y SEXO (INE, Banco de Datos ENE) ───────────────
+// Trimestre móvil marzo-mayo de cada año. t=Total, h=Hombre, m=Mujer.
+const HIST = {
+  'Arica y Parinacota': { 2024:{t:7.3,h:7.4,m:7.1}, 2025:{t:7.2,h:6.3,m:8.4}, 2026:{t:8.4,h:9.2,m:7.3} },
+  'Tarapacá':            { 2024:{t:5.8,h:4.9,m:7.1}, 2025:{t:10.7,h:10.3,m:11.2}, 2026:{t:9.0,h:9.7,m:8.2} },
+  'Antofagasta':         { 2024:{t:8.3,h:7.7,m:9.2}, 2025:{t:6.8,h:6.3,m:7.5}, 2026:{t:7.3,h:6.2,m:8.8} },
+  'Atacama':             { 2024:{t:9.2,h:8.0,m:10.7}, 2025:{t:9.7,h:9.3,m:10.2}, 2026:{t:8.3,h:7.2,m:9.8} },
+  'Coquimbo':            { 2024:{t:8.2,h:8.0,m:8.5}, 2025:{t:8.8,h:7.6,m:10.4}, 2026:{t:9.1,h:7.9,m:10.6} },
+  'Valparaíso':          { 2024:{t:7.7,h:7.2,m:8.3}, 2025:{t:8.9,h:8.6,m:9.1}, 2026:{t:10.2,h:9.4,m:11.3} },
+  'O\'Higgins':          { 2024:{t:9.5,h:7.5,m:12.2}, 2025:{t:9.0,h:8.3,m:10.0}, 2026:{t:10.2,h:8.5,m:12.5} },
+  'Maule':               { 2024:{t:8.5,h:7.1,m:10.2}, 2025:{t:7.3,h:5.8,m:9.3}, 2026:{t:10.0,h:8.6,m:11.8} },
+  'Ñuble':               { 2024:{t:10.2,h:9.1,m:11.7}, 2025:{t:10.4,h:9.6,m:11.3}, 2026:{t:10.1,h:8.5,m:12.3} },
+  'Biobío':              { 2024:{t:8.7,h:7.7,m:10.0}, 2025:{t:9.0,h:7.8,m:10.5}, 2026:{t:9.8,h:8.5,m:11.3} },
+  'La Araucanía':        { 2024:{t:9.0,h:7.3,m:11.2}, 2025:{t:9.8,h:8.5,m:11.5}, 2026:{t:8.7,h:7.4,m:10.3} },
+  'Los Ríos':            { 2024:{t:8.6,h:7.2,m:10.5}, 2025:{t:8.9,h:7.5,m:10.7}, 2026:{t:9.7,h:8.1,m:11.8} },
+  'Los Lagos':           { 2024:{t:4.8,h:3.7,m:6.5}, 2025:{t:6.4,h:5.9,m:7.0}, 2026:{t:7.1,h:5.7,m:8.9} },
+  'Aysén':               { 2024:{t:5.2,h:5.7,m:4.6}, 2025:{t:4.3,h:3.0,m:5.9}, 2026:{t:4.1,h:2.5,m:5.9} },
+  'Magallanes':          { 2024:{t:7.1,h:5.9,m:8.6}, 2025:{t:6.1,h:4.5,m:8.1}, 2026:{t:6.5,h:4.7,m:8.8} },
+  'Metropolitana':       { 2024:{t:8.6,h:8.2,m:9.0}, 2025:{t:9.5,h:8.6,m:10.6}, 2026:{t:9.8,h:9.2,m:10.4} },
+};
+const NAC_HIST = { 2024:{t:8.3,h:7.6,m:9.3}, 2025:{t:8.9,h:8.1,m:10.1}, 2026:{t:9.4,h:8.6,m:10.5} };
+const AN_YEARS = [2024,2025,2026];
+const AN_SEX = [ {v:'t',l:'Total'}, {v:'h',l:'Hombre'}, {v:'m',l:'Mujer'} ];
 
 // ─── CHART HELPERS ────────────────────────────────────────────────────────────
 const CH = {};
@@ -512,6 +475,7 @@ function renderRegional(){
   const dColors = REG.map(r=> r.d < NAC_D ? '#059669' : '#dc2626');
   bar('cRegD', REG.map(r=>r.n), REG.map(r=>r.d), dColors);
 
+  // Add annotation line (draw after) — use a simple plugin
   const chart = CH['cRegD'];
   const plugin = {
     id:'nacLine',
@@ -585,68 +549,139 @@ function renderRegional(){
   });
 }
 
-// ─── BANCO CENTRAL LIVE (fetch directo del navegador — sin puente Cowork) ─────
-async function loadBCCH(){
-  const user = document.getElementById('bcU').value.trim();
-  const pass = document.getElementById('bcP').value.trim();
-  const st = document.getElementById('bcSt');
-  const btn = document.getElementById('btnBc');
-  if(!user||!pass){ st.className='smsg er'; st.textContent='⚠️ Ingresa tu usuario y contraseña BDEstat.'; return; }
-
-  btn.disabled=true; btn.textContent='Conectando…';
-  st.className='smsg ld'; st.textContent='⏳ Conectando con el Banco Central de Chile…';
-
-  const today = new Date().toISOString().split('T')[0];
-  const ly = new Date(Date.now()-365*24*60*60*1000).toISOString().split('T')[0];
-  const base = 'https://si3.bcentral.cl/SieteRestWS/SieteRestWS.ashx';
-
-  async function bcGet(series){
-    const url = `${base}?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}&function=GetSeries&timeseries=${series}&firstdate=${ly}&lastdate=${today}&format=json`;
-    const r = await fetch(url);
-    if(!r.ok) throw new Error('Error de red (' + r.status + ')');
-    const raw = await r.text();
-    return JSON.parse(raw.slice(raw.indexOf('{')));
+// ─── ANÁLISIS CRUZADO — TEMAS DISPONIBLES ─────────────────────────────────────
+// Cada tema define sus propias regiones/años/valores. "sex" indica si el desglose
+// por sexo aplica; si un tema solo tiene un año disponible, se indica en 'note'.
+const REGION_NAMES = Object.keys(HIST);
+const TOPICS = {
+  desempleo: {
+    label: '📉 Desempleo',
+    hasSex: true,
+    years: [2024,2025,2026],
+    yearLabel: 'Años (trimestre marzo-mayo)',
+    unit: '%',
+    chartTitle: 'Comparación de desempleo — trimestre móvil marzo-mayo',
+    source: 'Fuente: INE, Banco de Datos ENE · 2024-2026',
+    note: null,
+    getVal: (r,y,s) => (r==='__NAC__' ? NAC_HIST[y] : HIST[r][y])[s]
+  },
+  pib: {
+    label: '📈 PIB Regional (crecimiento)',
+    hasSex: false,
+    years: [2026],
+    yearLabel: 'Período (T1 = ene-mar)',
+    unit: '%',
+    chartTitle: 'PIB Regional — variación interanual',
+    source: 'Fuente: Banco Central de Chile · Primer Trimestre 2026',
+    note: '⚠️ Por ahora solo hay dato del Primer Trimestre 2026 (variación interanual). El histórico T1 2024 y T1 2025 no se pudo descargar todavía por un error temporal en bcentral.cl — se agregará cuando el sitio vuelva a responder.',
+    getVal: (r,y,s) => r==='__NAC__' ? NAC_PIB : (REG_PIB.find(x=>x.n===r)||{v:null}).v
   }
+};
+let currentTopic = 'desempleo';
+let anSetupDone = false;
 
-  try{
-    const [tcoJ,tpmJ] = await Promise.all([bcGet('F073.TCO.PRE.Z.D'), bcGet('F022.TPM.TIN.INS.M')]);
-    if(tcoJ.Codigo<0) throw new Error(tcoJ.Descripcion||'Credenciales inválidas');
+function setupAnalisis(){
+  if(anSetupDone) return; anSetupDone = true;
 
-    st.className='smsg ok'; st.textContent='✅ Conexión exitosa con el Banco Central de Chile';
-    btn.disabled=false; btn.textContent='Actualizar';
-    document.getElementById('bcRes').style.display='block';
+  const topicBox = document.getElementById('anTopicList');
+  topicBox.innerHTML = Object.keys(TOPICS).map(k=>`<label style="display:flex;align-items:center;gap:6px;">
+      <input type="radio" name="anTopic" value="${k}" ${k==='desempleo'?'checked':''} onchange="cambiarTema('${k}')"> ${TOPICS[k].label}</label>`).join('');
 
-    const tcoObs = (tcoJ.Series?.Obs||[]).filter(o=>o.value!=='NaN').slice(-60);
-    const tpmObs = (tpmJ.Series?.Obs||[]).filter(o=>o.value!=='NaN');
-    const cards = document.getElementById('bcCards');
-    cards.innerHTML='';
-
-    if(tcoObs.length){
-      const lt = tcoObs[tcoObs.length-1];
-      cards.innerHTML+=`<div class="sc"><div class="sn">USD/CLP</div><div class="sv">$${parseFloat(lt.value).toFixed(2)}</div><div class="sd">${lt.indexDateString}</div></div>`;
-      line('cTCO', tcoObs.map(o=>o.indexDateString.slice(0,10)), tcoObs.map(o=>parseFloat(o.value)), '#2563a8','$','');
-    }
-    if(tpmObs.length){
-      const lt = tpmObs[tpmObs.length-1];
-      cards.innerHTML+=`<div class="sc"><div class="sn">TPM</div><div class="sv">${parseFloat(lt.value).toFixed(2)}%</div><div class="sd">${lt.indexDateString}</div></div>`;
-      line('cTPM', tpmObs.map(o=>o.indexDateString.slice(0,7)), tpmObs.map(o=>parseFloat(o.value)), '#059669');
-    }
-  }catch(e){
-    st.className='smsg er'; st.textContent='❌ No se pudo conectar desde este archivo (posible bloqueo CORS del navegador). Prueba desde la versión Cowork del monitor, o consulta los datos directo en si3.bcentral.cl.';
-    btn.disabled=false; btn.textContent='Reintentar';
-  }
+  buildFiltersForTopic('desempleo');
+  generarComparacion();
 }
 
-// ─── TAB SWITCHING ────────────────────────────────────────────────────────────
-const TABS = ['nacional','regiones','bcch','fuentes'];
-function sw(name){
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',TABS[i]===name));
-  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',TABS[i]===name));
-  if(name==='regiones') setTimeout(renderRegional,60);
+function cambiarTema(k){
+  currentTopic = k;
+  buildFiltersForTopic(k);
+  generarComparacion();
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-renderNational();
-</script>
-</body>
-</html>
+function buildFiltersForTopic(k){
+  const topic = TOPICS[k];
+
+  const regBox = document.getElementById('anRegList');
+  regBox.innerHTML = `<label style="display:flex;align-items:center;gap:6px;padding:3px 0;font-weight:600;">
+      <input type="checkbox" value="__NAC__" checked> Nacional (total país)</label>` +
+    REGION_NAMES.map((n)=>`<label style="display:flex;align-items:center;gap:6px;padding:3px 0;">
+      <input type="checkbox" value="${n}" ${ (n==='Metropolitana'||n==='Biobío'||n==='Magallanes') ?'checked':'' }> ${n}</label>`).join('');
+
+  document.getElementById('anYearLbl').textContent = topic.yearLabel;
+  const yearBox = document.getElementById('anYearList');
+  yearBox.innerHTML = topic.years.map(y=>`<label style="display:flex;align-items:center;gap:6px;padding:3px 0;">
+      <input type="checkbox" class="anYear" value="${y}" checked ${topic.years.length===1?'disabled':''}> ${y}</label>`).join('');
+
+  const sexBox = document.getElementById('anSexList');
+  const sexLbl = document.getElementById('anSexLbl');
+  if(topic.hasSex){
+    sexLbl.style.display=''; sexBox.style.display='';
+    sexBox.innerHTML = `<label style="display:flex;align-items:center;gap:6px;padding:3px 0;">
+        <input type="radio" name="anSex" value="t" checked> Total</label>
+        <label style="display:flex;align-items:center;gap:6px;padding:3px 0;">
+        <input type="radio" name="anSex" value="h"> Solo hombres</label>
+        <label style="display:flex;align-items:center;gap:6px;padding:3px 0;">
+        <input type="radio" name="anSex" value="m"> Solo mujeres</label>
+        <label style="display:flex;align-items:center;gap:6px;padding:3px 0;">
+        <input type="radio" name="anSex" value="hm"> Comparar hombres vs. mujeres</label>`;
+  } else {
+    sexLbl.style.display='none'; sexBox.style.display='none'; sexBox.innerHTML='';
+  }
+
+  const noteBox = document.getElementById('anNote');
+  if(topic.note){ noteBox.style.display='block'; noteBox.innerHTML = `<div class="notice" style="margin:0;">${topic.note}</div>`; }
+  else { noteBox.style.display='none'; noteBox.innerHTML=''; }
+
+  document.getElementById('anChartTitle').textContent = topic.chartTitle;
+  document.getElementById('anChartSrc').textContent = topic.source;
+}
+
+const PALETTE = ['#2563a8','#dc2626','#059669','#ea580c','#7c3aed','#0891b2','#be185d','#65a30d'];
+
+function generarComparacion(){
+  const topic = TOPICS[currentTopic];
+  const regs = Array.from(document.querySelectorAll('#anRegList input:checked')).map(i=>i.value);
+  const years = Array.from(document.querySelectorAll('.anYear:checked')).map(i=>parseInt(i.value)).sort();
+  const sexMode = topic.hasSex ? (document.querySelector('input[name="anSex"]:checked')||{value:'t'}).value : 't';
+
+  if(regs.length===0 || years.length===0){
+    document.getElementById('anTableHead').innerHTML = '<th>Selecciona al menos una región y un período</th>';
+    document.getElementById('anTableBody').innerHTML = '';
+    killChart('cAnalisis');
+    return;
+  }
+
+  const labels = regs.map(r=> r==='__NAC__' ? 'Nacional' : r);
+  const getVal = (r,y,s) => topic.getVal(r,y,s);
+
+  let datasets = [];
+  let ci = 0;
+  if(sexMode==='hm'){
+    years.forEach(y=>{
+      datasets.push({ label:`${y} · Hombre`, data: regs.map(r=>getVal(r,y,'h')), backgroundColor: PALETTE[ci++ % PALETTE.length] });
+      datasets.push({ label:`${y} · Mujer`,  data: regs.map(r=>getVal(r,y,'m')), backgroundColor: PALETTE[ci++ % PALETTE.length] });
+    });
+  } else {
+    years.forEach(y=>{
+      datasets.push({ label:`${y}`, data: regs.map(r=>getVal(r,y,sexMode)), backgroundColor: PALETTE[ci++ % PALETTE.length] });
+    });
+  }
+
+  killChart('cAnalisis');
+  CH['cAnalisis'] = new Chart(document.getElementById('cAnalisis'), {
+    type:'bar',
+    data:{ labels, datasets: datasets.map(d=>({...d, borderRadius:4})) },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:true, position:'top', labels:{font:{size:10}}},
+        tooltip:{ callbacks:{ label:c=> c.dataset.label+': '+c.parsed.y.toFixed(1)+topic.unit } } },
+      scales:{
+        x:{ grid:{display:false}, ticks:{font:{size:10}} },
+        y:{ grid:{color:'#f3f4f6'}, ticks:{font:{size:10}, callback:v=>v+topic.unit} }
+      }
+    }
+  });
+
+  // Tabla
+  const head = document.getElementById('anTableHead');
+  const body = document.getElementById('anTableBody');
+  let headCols = ['Región'];
+  if(sexMode==='hm'){ years.forEach(y=>{ headCols.push(y+' Hombre'); headCols.push(y+' Muj

@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitor Económico y Social — Chile</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root { color-scheme: light; }
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#f0f2f5; color:#1a1a2e; font-size:14px; }
+
+/* HEADER */
+.hdr{ background:linear-gradient(135deg,#1a3a6b 0%,#2563a8 100%); color:#fff; padding:18px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+.hdr-l{ display:flex; align-items:center; gap:12px; }
+.hdr h1{ font-size:18px; font-weight:700; }
+.hdr-sub{ font-size:11px; opacity:.7; margin-top:2px; }
+.hdr-r{ text-align:right; }
+.upd{ font-size:11px; opacity:.7; }
+.badge-upd{ display:inline-block; margin-top:4px; background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); color:#fff; padding:3px 10px; border-radius:5px; font-size:11px; }
+
+/* TABS */
+.tabs{ background:#fff; border-bottom:1px solid #e5e7eb; display:flex; padding:0 24px; }
+.tab{ padding:11px 16px; cursor:pointer; font-size:13px; font-weight:500; color:#6b7280; border-bottom:2px solid transparent; white-space:nowrap; transition:color .15s; }
+.tab:hover{ color:#1a3a6b; }
+.tab.active{ color:#1a3a6b; border-bottom-color:#2563a8; }
+
+/* LAYOUT */
+.content{ padding:20px 24px; }
+.panel{ display:none; }
+.panel.active{ display:block; }
+
+/* KPI STRIP */
+.kpi-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:12px; margin-bottom:18px; }
+.kpi{ background:#fff; border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.07); border-left:4px solid; }
+.kpi.b{ border-left-color:#2563a8; }
+.kpi.r{ border-left-color:#dc2626; }
+.kpi.o{ border-left-color:#ea580c; }
+.kpi.p{ border-left-color:#7c3aed; }
+.kpi.g{ border-left-color:#059669; }
+.kpi.t{ border-left-color:#0891b2; }
+.kpi-lbl{ font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+.kpi-val{ font-size:24px; font-weight:700; margin:4px 0 2px; line-height:1.1; }
+.kpi-u{ font-size:12px; font-weight:400; color:#6b7280; }
+.kpi-sub{ font-size:10px; color:#9ca3af; }
+
+/* CHART GRID */
+.cg{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.cc{ background:#fff; border-radius:10px; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,.07); }
+.cc.full{ grid-column:1/-1; }
+.ct{ font-size:12px; font-weight:600; color:#374151; margin-bottom:2px; }
+.cs{ font-size:10px; color:#9ca3af; margin-bottom:10px; }
+.cw{ height:185px; position:relative; }
+.cw.tall{ height:290px; }
+
+/* REGION TABLE */
+.rtbl{ width:100%; border-collapse:collapse; font-size:12px; margin-top:10px; }
+.rtbl th{ text-align:left; padding:5px 7px; color:#9ca3af; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid #f3f4f6; }
+.rtbl td{ padding:6px 7px; border-bottom:1px solid #fafafa; }
+.rtbl tr:last-child td{ border-bottom:none; }
+.bar{ height:7px; border-radius:3px; }
+.bdg{ display:inline-block; padding:1px 6px; border-radius:8px; font-size:10px; font-weight:600; }
+
+/* INFO CARDS */
+.icard{ background:#fff; border-radius:10px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,.07); margin-bottom:14px; }
+.icard h3{ font-size:13px; font-weight:700; color:#1a1a2e; margin-bottom:12px; }
+.sgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:10px; }
+.sitem{ background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:12px 14px; }
+.sitem h4{ font-size:11px; font-weight:700; color:#1a3a6b; margin-bottom:5px; }
+.sitem p{ font-size:11px; color:#6b7280; line-height:1.55; }
+.sitem a{ color:#2563a8; font-size:11px; font-weight:500; text-decoration:none; display:inline-block; margin-top:5px; }
+
+/* BCCH FORM */
+.frow{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:10px; }
+.fg{ flex:1; min-width:175px; }
+.fg label{ display:block; font-size:10px; font-weight:600; color:#374151; margin-bottom:3px; text-transform:uppercase; letter-spacing:.4px; }
+.fg input{ width:100%; padding:8px 11px; border:1px solid #d1d5db; border-radius:7px; font-size:13px; }
+.fg input:focus{ outline:none; border-color:#2563a8; box-shadow:0 0 0 2px rgba(37,99,168,.1); }
+.btn{ padding:8px 16px; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; border:none; }
+.bp{ background:#2563a8; color:#fff; }
+.bp:hover{ background:#1a3a6b; }
+.bp:disabled{ background:#9ca3af; cursor:not-allowed; }
+.smsg{ font-size:12px; padding:7px 11px; border-radius:6px; margin-top:8px; }
+.ok{ background:#dcfce7; color:#166534; }
+.er{ background:#fee2e2; color:#991b1b; }
+.ld{ background:#dbeafe; color:#1d4ed8; }
+
+/* ALERT BOX */
+.abox{ background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 16px; margin-bottom:14px; font-size:12px; color:#1e40af; line-height:1.6; }
+
+/* SERIES CARDS */
+.scgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:10px; margin-top:14px; }
+.sc{ background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:12px 14px; }
+.sn{ font-size:10px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+.sv{ font-size:20px; font-weight:700; color:#1a1a2e; margin:3px 0; }
+.sd{ font-size:10px; color:#9ca3af; }
+
+/* DATA UPDATE NOTICE */
+.notice{ background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:10px 14px; font-size:11px; color:#9a3412; margin-bottom:14px; }
+
+/* FOOTER */
+.footer{ background:#f9fafb; border-top:1px solid #e5e7eb; padding:8px 24px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.footer span{ font-size:10px; color:#9ca3af; font-weight:600; text-transform:uppercase; }
+.footer a{ font-size:11px; color:#6b7280; text-decoration:none; padding:2px 7px; background:#f3f4f6; border-radius:4px; }
+.footer a:hover{ background:#e5e7eb; }
+
+@media(max-width:600px){
+  .cg{ grid-template-columns:1fr; }
+  .cc.full{ grid-column:1; }
+  .kpi-row{ grid-template-columns:1fr 1fr; }
+  .content,.hdr{ padding:14px 16px; }
+  .tabs{ padding:0 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-l">
+    <span style="font-size:30px">🇨🇱</span>
+    <div>
+      <h1>Monitor Económico y Social — Chile</h1>
+      <div class="hdr-sub">Banco Central · INE · SII · Banco Mundial · datos.gob.cl</div>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <div class="upd">Actualizado: <strong>6 julio 2026</strong></div>
+    <div class="badge-upd">📄 Versión estática para compartir</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="sw('nacional')">📊 Nacional</div>
+  <div class="tab" onclick="sw('regiones')">🗺️ Regiones</div>
+  <div class="tab" onclick="sw('bcch')">🏦 Banco Central</div>
+  <div class="tab" onclick="sw('fuentes')">ℹ️ Fuentes</div>
+</div>
+
+<div class="content">
+
+<!-- ══════════════ NACIONAL ══════════════ -->
+<div id="p-nacional" class="panel active">
+
+  <div class="kpi-row">
+    <div class="kpi o">
+      <div class="kpi-lbl">Desempleo nacional ⭐</div>
+      <div class="kpi-val">9.4<span class="kpi-u"> %</span></div>
+      <div class="kpi-sub">mar–may 2026 · ENE, INE</div>
+    </div>
+    <div class="kpi r">
+      <div class="kpi-lbl">IPC — Var. mensual ⭐</div>
+      <div class="kpi-val">+0.2<span class="kpi-u"> %</span></div>
+      <div class="kpi-sub">Mayo 2026 · INE</div>
+    </div>
+    <div class="kpi r">
+      <div class="kpi-lbl">IPC — Var. 12 meses ⭐</div>
+      <div class="kpi-val">+3.9<span class="kpi-u"> %</span></div>
+      <div class="kpi-sub">Mayo 2026 · Banco Central</div>
+    </div>
+    <div class="kpi g">
+      <div class="kpi-lbl">Remuneraciones (12m) ⭐</div>
+      <div class="kpi-val">+5.7<span class="kpi-u"> %</span></div>
+      <div class="kpi-sub">Abril 2026 · INE</div>
+    </div>
+    <div class="kpi t">
+      <div class="kpi-lbl">Informalidad laboral ⭐</div>
+      <div class="kpi-val">27.0<span class="kpi-u"> %</span></div>
+      <div class="kpi-sub">mar–may 2026 · ENE, INE</div>
+    </div>
+    <div class="kpi p">
+      <div class="kpi-lbl">TPM ⭐</div>
+      <div class="kpi-val">4.5<span class="kpi-u"> %</span></div>
+      <div class="kpi-sub">Vigente · Banco Central</div>
+    </div>
+    <div class="kpi b">
+      <div class="kpi-lbl">Crecimiento PIB ⭐</div>
+      <div class="kpi-val">-0.5<span class="kpi-u"> %</span></div>
+      <div class="kpi-sub">T1 2026 interanual · Banco Central</div>
+    </div>
+    <div class="kpi p">
+      <div class="kpi-lbl">PIB per cápita ⭐</div>
+      <div class="kpi-val">USD 17.8<span class="kpi-u">k</span></div>
+      <div class="kpi-sub">Año 2025 (17.843) · Banco Central (BDE)</div>
+    </div>
+  </div>
+  <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:7px;padding:9px 14px;font-size:11px;color:#166534;margin-bottom:14px;">
+    ⭐ <strong>Datos oficiales más recientes disponibles a julio 2026</strong> · Desempleo, informalidad y remuneraciones: trimestre móvil/mes más reciente publicado por INE. IPC de 12 meses y TPM: valores vigentes del Banco Central. El desglose regional y por sexo (pestaña Regiones) corresponde al mismo período que el dato nacional, sin rezago.
+  </div>
+  <div class="notice" style="background:#f0fdf4;border-color:#86efac;color:#166534;">
+    ✅ <strong>Verificado en fuente primaria:</strong> El PIB per cápita 2025 (US$17.843) y la población (20.036.669 habitantes, recalibrada con el Censo 2024 vía las nuevas "Estimaciones y proyecciones de población, Base 2024" del INE, publicadas 28-01-2026) se confirmaron en la Base de Datos Estadísticos (BDE) del Banco Central. El <strong>Crecimiento del PIB (-0,5%)</strong> proviene de la nota de prensa oficial "PIB Regional, Primer Trimestre 2026" (23-06-2026) y es la variación <em>real interanual T1 2026</em> — no comparable con el per cápita, que es un nivel <em>nominal en USD</em>. Pobreza (CASEN 2022) sigue siendo el dato más reciente disponible.
+  </div>
+
+  <div class="cg">
+    <div class="cc">
+      <div class="ct">Crecimiento del PIB (% anual)</div>
+      <div class="cs">Fuente: Banco Mundial 2017–2024 (anual) + Banco Central, T1 2026* (trimestral interanual)</div>
+      <div class="cw"><canvas id="cPIB"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="ct">Inflación — IPC (% anual)</div>
+      <div class="cs">Fuente: Banco Mundial 2020–2024 + IPC 12 meses Banco Central, may 2026*</div>
+      <div class="cw"><canvas id="cIPC"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="ct">Tasa de Desempleo (%) — con dato 2026</div>
+      <div class="cs">Fuente: Banco Mundial/OIT 2021–2024 + ENE INE mar-may 2026*</div>
+      <div class="cw"><canvas id="cDesemp"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="ct">PIB per cápita (USD corrientes)</div>
+      <div class="cs">Fuente: Banco Mundial 2017–2024 + Banco Central (BDE), 2025* confirmado</div>
+      <div class="cw"><canvas id="cGDPpc"></canvas></div>
+    </div>
+  </div>
+
+  <div class="cg">
+    <div class="cc">
+      <div class="ct">Tasa de Pobreza Nacional (%)</div>
+      <div class="cs">Fuente: CASEN / Banco Mundial · línea de pobreza nacional</div>
+      <div class="cw"><canvas id="cPov"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="ct">Evolución Población (millones)</div>
+      <div class="cs">Fuente: INE, proyecciones Base 2024 (vía BDE Banco Central) · recalibrada con Censo 2024</div>
+      <div class="cw"><canvas id="cPob"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ REGIONES ══════════════ -->
+<div id="p-regiones" class="panel">
+
+  <div class="abox">
+    📋 <strong>Fuente: INE — Banco de Datos ENE (bancodatosene.ine.cl).</strong>
+    Los datos de desempleo regional y por sexo corresponden al trimestre móvil <strong>marzo–mayo 2026</strong> — el mismo período que la cifra nacional (9,4%), sin rezago. Población: proyecciones INE 2024. Verde = bajo la media, Rojo = sobre la media.
+  </div>
+
+  <div class="cg">
+    <div class="cc full">
+      <div class="ct">Tasa de Desocupación por Región — ENE marzo-mayo 2026</div>
+      <div class="cs">Fuente: INE, Banco de Datos ENE · Línea punteada = promedio nacional marzo-mayo 2026 (9,4%)</div>
+      <div class="cw tall"><canvas id="cRegD"></canvas></div>
+    </div>
+  </div>
+
+  <div class="cc" style="margin-bottom:14px;">
+    <div class="ct">Comparación regional — Desempleo por sexo y Población</div>
+    <div class="cs">Fuente: INE — Banco de Datos ENE, mar-may 2026 (desempleo) · Población INE 2024 · Ordenado por desempleo total ascendente</div>
+    <table class="rtbl">
+      <thead>
+        <tr><th>#</th><th>Región</th><th>Total %</th><th>Hombre %</th><th>Mujer %</th><th>Barra</th><th>Población</th><th>vs. Media</th></tr>
+      </thead>
+      <tbody id="regBody"></tbody>
+    </table>
+  </div>
+
+  <div class="abox" style="margin-top:14px;">
+    📋 <strong>Fuente: Banco Central de Chile — PIB Regional, Primer Trimestre 2026</strong> (nota de prensa del 23-06-2026). Variación interanual (T1 2026 vs. T1 2025). El PIB nacional cayó 0,5% interanual, arrastrado por diez de las dieciséis regiones; la caída se explica principalmente por minería y el sector agropecuario-silvícola.
+  </div>
+
+  <div class="cg">
+    <div class="cc full">
+      <div class="ct">PIB Regional — Variación interanual, T1 2026</div>
+      <div class="cs">Fuente: Banco Central de Chile · Línea punteada = variación nacional T1 2026 (-0,5%)</div>
+      <div class="cw tall"><canvas id="cRegPIB"></canvas></div>
+    </div>
+  </div>
+
+  <div class="cg">
+    <div class="cc full">
+      <div class="ct">Población por Región (miles de habitantes) — Proyección INE 2024</div>
+      <div class="cs">Fuente: INE — Proyecciones de Población · La Metropolitana concentra el 41% del total nacional</div>
+      <div class="cw tall"><canvas id="cRegP"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ BANCO CENTRAL ══════════════ -->
+<div id="p-bcch" class="panel">
+
+  <div class="icard">
+    <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;">
+      <span style="font-size:28px">🏦</span>
+      <div>
+        <h3 style="margin-bottom:5px;">Conexión en vivo — API BDEstat del Banco Central de Chile</h3>
+        <p style="font-size:12px;color:#6b7280;line-height:1.6;">El Banco Central ofrece acceso gratuito a su base estadística (BDEstat). Primero <a href="https://si3.bcentral.cl/SieteRestWS" target="_blank" style="color:#2563a8;font-weight:600;">regístrate en si3.bcentral.cl</a> (es gratis, solo necesitas un correo). Luego ingresa tus credenciales para intentar cargar datos en tiempo real de tipo de cambio y TPM directamente desde tu navegador.</p>
+        <p style="font-size:11px;color:#9a3412;margin-top:6px;">⚠️ En esta versión de archivo compartido, la conexión se hace directo desde tu navegador (sin el puente de Cowork). Si el Banco Central bloquea la solicitud por política de origen cruzado (CORS), verás un error abajo — es una limitación del navegador, no de tus credenciales. El resto del dashboard funciona igual, con datos ya incluidos en el archivo.</p>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg">
+        <label>Usuario (correo BDEstat)</label>
+        <input type="email" id="bcU" placeholder="tucorreo@ejemplo.cl">
+      </div>
+      <div class="fg">
+        <label>Contraseña BDEstat</label>
+        <input type="password" id="bcP" placeholder="Contraseña">
+      </div>
+      <button class="btn bp" id="btnBc" onclick="loadBCCH()">Conectar y cargar</button>
+    </div>
+    <div id="bcSt"></div>
+  </div>
+
+  <div id="bcRes" style="display:none;">
+    <div class="scgrid" id="bcCards"></div>
+    <div class="cg" style="margin-top:14px;">
+      <div class="cc">
+        <div class="ct">Tipo de Cambio USD/CLP</div>
+        <div class="cs">Fuente: Banco Central de Chile · últimos 12 meses</div>
+        <div class="cw"><canvas id="cTCO"></canvas></div>
+      </div>
+      <div class="cc">
+        <div class="ct">Tasa de Política Monetaria — TPM (%)</div>
+        <div class="cs">Fuente: Banco Central de Chile</div>
+        <div class="cw"><canvas id="cTPM"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="icard">
+    <h3>📈 Series disponibles en la API del Banco Central</h3>
+    <div class="sgrid">
+      <div class="sitem"><h4>Tipo de Cambio USD/CLP</h4><code style="font-size:10px;color:#6b7280">F073.TCO.PRE.Z.D</code></div>
+      <div class="sitem"><h4>Tasa Política Monetaria</h4><code style="font-size:10px;color:#6b7280">F022.TPM.TIN.INS.M</code></div>
+      <div class="sitem"><h4>IPC Mensual</h4><code style="font-size:10px;color:#6b7280">F073.IPC.IND.Z.Z.EP18.Z.Z.0</code></div>
+      <div class="sitem"><h4>IMACEC</h4><code style="font-size:10px;color:#6b7280">F032.IMC.IND.Z.Z.EP18.Z.Z.0</code></div>
+      <div class="sitem"><h4>Tipo de Cambio EUR/CLP</h4><code style="font-size:10px;color:#6b7280">F072.TCO.PRE.Z.D</code></div>
+      <div class="sitem"><h4>Tasas Captación 30-89 días</h4><code style="font-size:10px;color:#6b7280">F019.CAP.TIN.INS.M.90.M</code></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FUENTES ══════════════ -->
+<div id="p-fuentes" class="panel">
+  <div class="icard">
+    <h3>📚 Fuentes de datos — Cómo acceder a cada una</h3>
+    <div class="sgrid" style="margin-top:4px;">
+      <div class="sitem">
+        <h4>🏦 Banco Central de Chile</h4>
+        <p>API REST gratuita (requiere registro) para tipo de cambio, tasas, TPM, IPC, IMACEC. PIB Regional (trimestral, sin registro) con desagregación por las 16 regiones. Datos diarios y mensuales desde los años 80.</p>
+        <a href="https://si3.bcentral.cl" target="_blank">→ si3.bcentral.cl (registro gratis)</a>
+        <a href="https://www.bcentral.cl/areas/estadisticas/pib-regional" target="_blank">→ PIB Regional (público, sin registro)</a>
+      </div>
+      <div class="sitem">
+        <h4>📊 INE — Inst. Nacional de Estadísticas</h4>
+        <p>ENE nacional y regional (empleo/desempleo, desagregado por sexo), IPC, Censo 2017, proyecciones de población. Se actualiza el mismo día de la publicación oficial (calendario INE).</p>
+        <a href="https://www.ine.gob.cl/estadisticas" target="_blank">→ ine.gob.cl</a>
+        <a href="https://bancodatosene.ine.cl" target="_blank">→ Banco de Datos ENE (consulta en vivo)</a>
+      </div>
+      <div class="sitem">
+        <h4>💼 SII — Impuestos Internos</h4>
+        <p>Empresas activas, renta, IVA, declaraciones y estadísticas tributarias por región y actividad económica. Datos anuales.</p>
+        <a href="https://www.sii.cl/estadisticas" target="_blank">→ sii.cl/estadisticas</a>
+      </div>
+      <div class="sitem">
+        <h4>🌐 Banco Mundial</h4>
+        <p>API completamente abierta y sin registro. PIB, inflación, población, pobreza. Los indicadores nacionales anuales de este monitor (PIB, PIB per cápita) provienen de aquí; el desempleo usa el dato oficial INE más reciente.</p>
+        <a href="https://data.worldbank.org/country/chile" target="_blank">→ data.worldbank.org</a>
+      </div>
+      <div class="sitem">
+        <h4>📈 PIB per cápita, Población y PIB Regional</h4>
+        <p>PIB per cápita y población (Base 2024, Censo 2024) confirmados en la tabla "Indicadores macroeconómicos anuales" de la Base de Datos Estadísticos del Banco Central, de acceso público. PIB Regional trimestral también público, sin registro.</p>
+        <a href="https://si3.bcentral.cl/siete/ES/Siete/Cuadro/CAP_CCNN/MN_EST_MACRO_IV/PEM_ACTyDDA_IndMacA_2_2018" target="_blank">→ BDE: Indicadores macroeconómicos anuales</a>
+        <a href="https://si3.bcentral.cl/estadisticas/principal1/enlaces/informes/anuariosccnn/anuario_CCNN_2025.html" target="_blank">→ Anuario Cuentas Nacionales 2018-2025</a>
+      </div>
+      <div class="sitem">
+        <h4>🏘️ CASEN — Min. Desarrollo Social</h4>
+        <p>Encuesta de Caracterización Socioeconómica Nacional. Pobreza, ingresos y acceso a servicios por región. Se levanta cada 2–3 años.</p>
+        <a href="https://observatorio.ministeriodesarrollosocial.gob.cl" target="_blank">→ observatorio.mds.cl</a>
+      </div>
+      <div class="sitem">
+        <h4>📁 datos.gob.cl</h4>
+        <p>Portal oficial de datos abiertos. Centraliza datasets de INE, SII, Ministerios y otros organismos en CSV, JSON y XLS.</p>
+        <a href="https://datos.gob.cl" target="_blank">→ datos.gob.cl</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="icard">
+    <h3>ℹ️ Sobre este archivo</h3>
+    <p style="font-size:12px;color:#6b7280;line-height:1.7;">Esta es una <strong>versión estática exportada el 6 de julio de 2026</strong> del Monitor Económico y Social de Chile, pensada para compartir por correo o carpeta compartida. Todos los datos (excepto la conexión opcional al Banco Central en la pestaña correspondiente) están incrustados en este mismo archivo — no requiere internet para verse, salvo para cargar los gráficos (vía CDN) y las conexiones opcionales.<br><br>
+    Es un archivo de un solo momento en el tiempo: no se actualiza solo. Para ver la versión con actualización automática semanal, contacta a quien administra el Monitor Chile en Cowork.</p>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<div class="footer">
+  <span>Fuentes</span>
+  <a href="https://si3.bcentral.cl" target="_blank">Banco Central</a>
+  <a href="https://bancodatosene.ine.cl" target="_blank">INE — Banco de Datos ENE</a>
+  <a href="https://www.sii.cl/estadisticas" target="_blank">SII</a>
+  <a href="https://data.worldbank.org/country/chile" target="_blank">Banco Mundial</a>
+  <a href="https://datos.gob.cl" target="_blank">datos.gob.cl</a>
+  <a href="https://observatorio.ministeriodesarrollosocial.gob.cl" target="_blank">CASEN</a>
+</div>
+
+<script>
+// ─── DATOS NACIONALES (Banco Mundial + INE + Banco Central, obtenidos julio 2026) ───
+const DATA = {
+  pib: { labels:['2017','2018','2019','2020','2021','2022','2023','2024','T1 2026*'], vals:[2.79,4.00,0.99,-6.14,11.31,2.15,0.52,2.64,-0.5] },
+  ipc: { labels:['2020','2021','2022','2023','2024','may 2026*'], vals:[3.05,4.52,11.64,7.58,4.30,3.90] },
+  desemp: { labels:['2021','2022','2023','2024','mar-may 2026*'], vals:[9.28,8.25,9.01,8.72,9.4] },
+  gdppc: { labels:['2017','2018','2019','2020','2021','2022','2023','2024','2025*'], vals:[14880,15659,14496,13115,16207,15406,17067,16710,17843] },
+  pov: { labels:['2013','2015','2017','2020','2022'], vals:[13.9,11.2,8.5,10.7,6.5] },
+  pop: { labels:['2017','2018','2019','2020','2021','2022','2023','2024','2025*'], vals:[18.46,18.75,19.04,19.24,19.39,19.58,19.76,19.90,20.04] },
+};
+
+// ─── DATOS REGIONALES (INE — Banco de Datos ENE, trimestre móvil marzo-mayo 2026) ────
+// Total / Hombre / Mujer, tasa de desocupación (%).
+// Población: proyecciones INE 2024 (miles de habitantes).
+const REG = [
+  { n:'Aysén',              d:4.1,  h:2.5, m:5.9,  p:107  },
+  { n:'Magallanes',         d:6.5,  h:4.7, m:8.8,  p:177  },
+  { n:'Los Lagos',          d:7.1,  h:5.7, m:8.9,  p:887  },
+  { n:'Antofagasta',        d:7.3,  h:6.2, m:8.8,  p:694  },
+  { n:'Atacama',            d:8.3,  h:7.2, m:9.8,  p:323  },
+  { n:'Arica y Parinacota', d:8.4,  h:9.2, m:7.3,  p:243  },
+  { n:'La Araucanía',       d:8.7,  h:7.4, m:10.3, p:1005 },
+  { n:'Tarapacá',           d:9.0,  h:9.7, m:8.2,  p:385  },
+  { n:'Coquimbo',           d:9.1,  h:7.9, m:10.6, p:805  },
+  { n:'Los Ríos',           d:9.7,  h:8.1, m:11.8, p:415  },
+  { n:'Biobío',             d:9.8,  h:8.5, m:11.3, p:1555 },
+  { n:'Metropolitana',      d:9.8,  h:9.2, m:10.4, p:8127 },
+  { n:'Maule',              d:10.0, h:8.6, m:11.8, p:1079 },
+  { n:'Ñuble',              d:10.1, h:8.5, m:12.3, p:509  },
+  { n:'Valparaíso',         d:10.2, h:9.4, m:11.3, p:1960 },
+  { n:'O\'Higgins',         d:10.2, h:8.5, m:12.5, p:985  },
+];
+const NAC_D = 9.4; // ENE mar-may 2026, INE (Banco de Datos ENE)
+
+// ─── PIB REGIONAL (Banco Central, Primer Trimestre 2026, variación interanual) ──────
+// Fuente: Nota de prensa "Producto Interno Bruto Regional, Primer Trimestre 2026" (23-06-2026)
+const REG_PIB = [
+  { n:'O\'Higgins',         v:-6.6 },
+  { n:'Antofagasta',        v:-5.3 },
+  { n:'Biobío',             v:-5.2 },
+  { n:'Maule',              v:-3.2 },
+  { n:'Ñuble',              v:-2.9 },
+  { n:'Aysén',              v:-2.6 },
+  { n:'La Araucanía',       v:-2.4 },
+  { n:'Arica y Parinacota', v:-1.9 },
+  { n:'Magallanes',         v:-1.3 },
+  { n:'Coquimbo',           v:-1.0 },
+  { n:'Valparaíso',         v:0.3  },
+  { n:'Metropolitana',      v:1.0  },
+  { n:'Los Lagos',          v:1.2  },
+  { n:'Los Ríos',           v:2.2  },
+  { n:'Tarapacá',           v:5.5  },
+  { n:'Atacama',            v:10.5 },
+];
+const NAC_PIB = -0.5; // Variación interanual nacional, T1 2026, Banco Central
+
+// ─── CHART HELPERS ────────────────────────────────────────────────────────────
+const CH = {};
+function killChart(id){ if(CH[id]){ CH[id].destroy(); delete CH[id]; } }
+
+function line(id,labels,vals,color,pfx='',sfx='%'){
+  killChart(id);
+  CH[id] = new Chart(document.getElementById(id),{
+    type:'line',
+    data:{ labels, datasets:[{ data:vals, borderColor:color, backgroundColor:color+'22',
+      borderWidth:2.5, pointRadius:4, pointBackgroundColor:color, fill:true, tension:.35 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label:c=>pfx+c.parsed.y.toFixed(2)+sfx } } },
+      scales:{
+        x:{ grid:{display:false}, ticks:{font:{size:10}} },
+        y:{ grid:{color:'#f3f4f6'}, ticks:{font:{size:10}, callback:v=>pfx+v.toFixed(1)+sfx} }
+      }
+    }
+  });
+}
+
+function bar(id,labels,vals,colors,sfx='%',horiz=true){
+  killChart(id);
+  CH[id] = new Chart(document.getElementById(id),{
+    type:'bar',
+    data:{ labels, datasets:[{ data:vals, backgroundColor:colors, borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      ...(horiz?{indexAxis:'y'}:{}),
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label:c=>{
+          const v = horiz ? c.parsed.x : c.parsed.y;
+          return v.toFixed(1)+sfx;
+        }}}},
+      scales:{
+        x:{ grid:{color:'#f3f4f6'}, ticks:{font:{size:10}, callback:v=>v+sfx} },
+        y:{ grid:{display:false}, ticks:{font:{size:10}} }
+      }
+    }
+  });
+}
+
+// ─── RENDER NATIONAL CHARTS ───────────────────────────────────────────────────
+function renderNational(){
+  line('cPIB', DATA.pib.labels, DATA.pib.vals, '#2563a8');
+  line('cIPC', DATA.ipc.labels, DATA.ipc.vals, '#dc2626');
+  line('cDesemp', DATA.desemp.labels, DATA.desemp.vals, '#ea580c');
+  line('cGDPpc', DATA.gdppc.labels, DATA.gdppc.vals, '#7c3aed','USD ','');
+  line('cPov', DATA.pov.labels, DATA.pov.vals, '#0891b2');
+  line('cPob', DATA.pop.labels, DATA.pop.vals, '#059669','','M');
+}
+
+// ─── RENDER REGIONAL ──────────────────────────────────────────────────────────
+let regDone = false;
+function renderRegional(){
+  if(regDone) return; regDone = true;
+
+  const dColors = REG.map(r=> r.d < NAC_D ? '#059669' : '#dc2626');
+  bar('cRegD', REG.map(r=>r.n), REG.map(r=>r.d), dColors);
+
+  const chart = CH['cRegD'];
+  const plugin = {
+    id:'nacLine',
+    afterDraw(chart){
+      const {ctx,chartArea,scales} = chart;
+      const x = scales.x.getPixelForValue(NAC_D);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, chartArea.top);
+      ctx.lineTo(x, chartArea.bottom);
+      ctx.strokeStyle='#1a3a6b';
+      ctx.lineWidth=2;
+      ctx.setLineDash([5,4]);
+      ctx.stroke();
+      ctx.fillStyle='#1a3a6b';
+      ctx.font='bold 10px sans-serif';
+      ctx.fillText('Nacional '+NAC_D+'%', x+4, chartArea.top+12);
+      ctx.restore();
+    }
+  };
+  if(chart) chart.config.plugins = [...(chart.config.plugins||[]), plugin], chart.update();
+
+  const byPob = [...REG].sort((a,b)=>b.p-a.p);
+  bar('cRegP', byPob.map(r=>r.n), byPob.map(r=>r.p), '#2563a8',' mil');
+
+  // PIB Regional
+  const pibColors = REG_PIB.map(r=> r.v < 0 ? '#dc2626' : '#059669');
+  bar('cRegPIB', REG_PIB.map(r=>r.n), REG_PIB.map(r=>r.v), pibColors);
+  const chartPib = CH['cRegPIB'];
+  const pluginPib = {
+    id:'nacLinePib',
+    afterDraw(chart){
+      const {ctx,chartArea,scales} = chart;
+      const x = scales.x.getPixelForValue(NAC_PIB);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, chartArea.top);
+      ctx.lineTo(x, chartArea.bottom);
+      ctx.strokeStyle='#1a3a6b';
+      ctx.lineWidth=2;
+      ctx.setLineDash([5,4]);
+      ctx.stroke();
+      ctx.fillStyle='#1a3a6b';
+      ctx.font='bold 10px sans-serif';
+      ctx.fillText('Nacional '+NAC_PIB+'%', x+4, chartArea.top+12);
+      ctx.restore();
+    }
+  };
+  if(chartPib) chartPib.config.plugins = [...(chartPib.config.plugins||[]), pluginPib], chartPib.update();
+
+  // Table
+  const tb = document.getElementById('regBody');
+  REG.forEach((r,i)=>{
+    const diff = (r.d - NAC_D).toFixed(1);
+    const s = diff>0?'+':'';
+    const bw = Math.round((r.d/12)*100);
+    const bc = r.d < NAC_D ? '#059669' : '#dc2626';
+    const dbg = diff>0?'#fee2e2':'#dcfce7';
+    const dc = diff>0?'#991b1b':'#166534';
+    const pob = r.p>=1000?(r.p/1000).toFixed(2)+' M':r.p+'K';
+    tb.innerHTML += `<tr>
+      <td style="color:#9ca3af;font-size:10px">${i+1}</td>
+      <td style="font-weight:500">${r.n}</td>
+      <td><strong>${r.d}%</strong></td>
+      <td style="color:#6b7280">${r.h}%</td>
+      <td style="color:#6b7280">${r.m}%</td>
+      <td style="width:70px"><div class="bar" style="width:${bw}%;background:${bc}"></div></td>
+      <td style="color:#6b7280">${pob}</td>
+      <td><span class="bdg" style="background:${dbg};color:${dc}">${s}${diff}%</span></td>
+    </tr>`;
+  });
+}
+
+// ─── BANCO CENTRAL LIVE (fetch directo del navegador — sin puente Cowork) ─────
+async function loadBCCH(){
+  const user = document.getElementById('bcU').value.trim();
+  const pass = document.getElementById('bcP').value.trim();
+  const st = document.getElementById('bcSt');
+  const btn = document.getElementById('btnBc');
+  if(!user||!pass){ st.className='smsg er'; st.textContent='⚠️ Ingresa tu usuario y contraseña BDEstat.'; return; }
+
+  btn.disabled=true; btn.textContent='Conectando…';
+  st.className='smsg ld'; st.textContent='⏳ Conectando con el Banco Central de Chile…';
+
+  const today = new Date().toISOString().split('T')[0];
+  const ly = new Date(Date.now()-365*24*60*60*1000).toISOString().split('T')[0];
+  const base = 'https://si3.bcentral.cl/SieteRestWS/SieteRestWS.ashx';
+
+  async function bcGet(series){
+    const url = `${base}?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}&function=GetSeries&timeseries=${series}&firstdate=${ly}&lastdate=${today}&format=json`;
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('Error de red (' + r.status + ')');
+    const raw = await r.text();
+    return JSON.parse(raw.slice(raw.indexOf('{')));
+  }
+
+  try{
+    const [tcoJ,tpmJ] = await Promise.all([bcGet('F073.TCO.PRE.Z.D'), bcGet('F022.TPM.TIN.INS.M')]);
+    if(tcoJ.Codigo<0) throw new Error(tcoJ.Descripcion||'Credenciales inválidas');
+
+    st.className='smsg ok'; st.textContent='✅ Conexión exitosa con el Banco Central de Chile';
+    btn.disabled=false; btn.textContent='Actualizar';
+    document.getElementById('bcRes').style.display='block';
+
+    const tcoObs = (tcoJ.Series?.Obs||[]).filter(o=>o.value!=='NaN').slice(-60);
+    const tpmObs = (tpmJ.Series?.Obs||[]).filter(o=>o.value!=='NaN');
+    const cards = document.getElementById('bcCards');
+    cards.innerHTML='';
+
+    if(tcoObs.length){
+      const lt = tcoObs[tcoObs.length-1];
+      cards.innerHTML+=`<div class="sc"><div class="sn">USD/CLP</div><div class="sv">$${parseFloat(lt.value).toFixed(2)}</div><div class="sd">${lt.indexDateString}</div></div>`;
+      line('cTCO', tcoObs.map(o=>o.indexDateString.slice(0,10)), tcoObs.map(o=>parseFloat(o.value)), '#2563a8','$','');
+    }
+    if(tpmObs.length){
+      const lt = tpmObs[tpmObs.length-1];
+      cards.innerHTML+=`<div class="sc"><div class="sn">TPM</div><div class="sv">${parseFloat(lt.value).toFixed(2)}%</div><div class="sd">${lt.indexDateString}</div></div>`;
+      line('cTPM', tpmObs.map(o=>o.indexDateString.slice(0,7)), tpmObs.map(o=>parseFloat(o.value)), '#059669');
+    }
+  }catch(e){
+    st.className='smsg er'; st.textContent='❌ No se pudo conectar desde este archivo (posible bloqueo CORS del navegador). Prueba desde la versión Cowork del monitor, o consulta los datos directo en si3.bcentral.cl.';
+    btn.disabled=false; btn.textContent='Reintentar';
+  }
+}
+
+// ─── TAB SWITCHING ────────────────────────────────────────────────────────────
+const TABS = ['nacional','regiones','bcch','fuentes'];
+function sw(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',TABS[i]===name));
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',TABS[i]===name));
+  if(name==='regiones') setTimeout(renderRegional,60);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderNational();
+</script>
+</body>
+</html>

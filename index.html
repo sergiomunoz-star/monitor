@@ -314,7 +314,11 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
         <div id="anRegList" style="max-height:210px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:12px;"></div>
       </div>
       <div>
-        <div id="anYearLbl" style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Años</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div id="anYearLbl" style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.4px;">Años</div>
+          <label style="font-size:10.5px;font-weight:600;color:#2563a8;cursor:pointer;display:flex;align-items:center;gap:4px;">
+            <input type="checkbox" id="anYearAll" onchange="toggleAllYears(this.checked)"> Todos</label>
+        </div>
         <div id="anYearList" style="max-height:210px;overflow-y:auto;font-size:12px;"></div>
       </div>
       <div>
@@ -643,6 +647,16 @@ function cambiarTema(k){
   generarComparacion();
 }
 
+// Casilla "Todos" para marcar/desmarcar de una vez todos los años disponibles.
+function toggleAllYears(checked){
+  document.querySelectorAll('.anYear').forEach(cb=>{ if(!cb.disabled) cb.checked = checked; });
+}
+function syncYearAllCheckbox(){
+  const boxes = Array.from(document.querySelectorAll('.anYear'));
+  const allCb = document.getElementById('anYearAll');
+  if(allCb) allCb.checked = boxes.length>0 && boxes.every(b=>b.checked);
+}
+
 function buildFiltersForTopic(k){
   const topic = TOPICS[k];
 
@@ -660,7 +674,8 @@ function buildFiltersForTopic(k){
     ? new Set([topic.years[0], topic.years[Math.floor(topic.years.length/2)], topic.years[topic.years.length-1]])
     : new Set(topic.years);
   yearBox.innerHTML = topic.years.map(y=>`<label style="display:flex;align-items:center;gap:6px;padding:3px 0;">
-      <input type="checkbox" class="anYear" value="${y}" ${defaultYears.has(y)?'checked':''} ${topic.years.length===1?'disabled':''}> ${y}</label>`).join('');
+      <input type="checkbox" class="anYear" value="${y}" ${defaultYears.has(y)?'checked':''} ${topic.years.length===1?'disabled':''} onchange="syncYearAllCheckbox()"> ${y}</label>`).join('');
+  syncYearAllCheckbox();
 
   const sexBox = document.getElementById('anSexList');
   const sexLbl = document.getElementById('anSexLbl');

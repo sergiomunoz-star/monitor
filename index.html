@@ -684,4 +684,32 @@ function generarComparacion(){
   const head = document.getElementById('anTableHead');
   const body = document.getElementById('anTableBody');
   let headCols = ['Región'];
-  if(sexMode==='hm'){ years.forEach(y=>{ headCols.push(y+' Hombre'); headCols.push(y+' Muj
+  if(sexMode==='hm'){ years.forEach(y=>{ headCols.push(y+' Hombre'); headCols.push(y+' Mujer'); }); }
+  else { years.forEach(y=> headCols.push(String(y))); }
+  head.innerHTML = headCols.map(h=>`<th>${h}</th>`).join('');
+
+  body.innerHTML = regs.map((r,i)=>{
+    let cells = `<td style="font-weight:500">${labels[i]}</td>`;
+    if(sexMode==='hm'){
+      years.forEach(y=>{ cells += `<td>${getVal(r,y,'h').toFixed(1)}${topic.unit}</td><td>${getVal(r,y,'m').toFixed(1)}${topic.unit}</td>`; });
+    } else {
+      years.forEach(y=>{ cells += `<td>${getVal(r,y,sexMode).toFixed(1)}${topic.unit}</td>`; });
+    }
+    return `<tr>${cells}</tr>`;
+  }).join('');
+}
+
+// ─── TAB SWITCHING ────────────────────────────────────────────────────────────
+const TABS = ['nacional','regiones','analisis'];
+function sw(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',TABS[i]===name));
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',TABS[i]===name));
+  if(name==='regiones') setTimeout(renderRegional,60);
+  if(name==='analisis') setTimeout(setupAnalisis,60);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderNational();
+</script>
+</body>
+</html>

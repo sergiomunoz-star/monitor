@@ -125,7 +125,7 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
     </div>
   </div>
   <div class="hdr-r">
-    <div class="upd">Actualizado: <strong>6 julio 2026</strong></div>
+    <div class="upd">Actualizado: <strong>7 julio 2026</strong></div>
     <div class="badge-upd">📅 Versión estática para compartir</div>
   </div>
 </div>
@@ -298,7 +298,7 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
       </div>
       <div>
         <div id="anYearLbl" style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Años</div>
-        <div id="anYearList" style="font-size:12px;"></div>
+        <div id="anYearList" style="max-height:210px;overflow-y:auto;font-size:12px;"></div>
       </div>
       <div>
         <div id="anSexLbl" style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Ver</div>
@@ -394,26 +394,51 @@ const NAC_PIB = -0.5; // Variación interanual nacional, T1 2026, Banco Central
 
 // ─── HISTÓRICO DESEMPLEO POR REGIÓN Y SEXO (INE, Banco de Datos ENE) ───────────────
 // Trimestre móvil marzo-mayo de cada año. t=Total, h=Hombre, m=Mujer.
+// Serie completa 2018-2026 (consulta en vivo al Banco de Datos ENE, bancodatosene.ine.cl).
 const HIST = {
-  'Arica y Parinacota': { 2024:{t:7.3,h:7.4,m:7.1}, 2025:{t:7.2,h:6.3,m:8.4}, 2026:{t:8.4,h:9.2,m:7.3} },
-  'Tarapacá':            { 2024:{t:5.8,h:4.9,m:7.1}, 2025:{t:10.7,h:10.3,m:11.2}, 2026:{t:9.0,h:9.7,m:8.2} },
-  'Antofagasta':         { 2024:{t:8.3,h:7.7,m:9.2}, 2025:{t:6.8,h:6.3,m:7.5}, 2026:{t:7.3,h:6.2,m:8.8} },
-  'Atacama':             { 2024:{t:9.2,h:8.0,m:10.7}, 2025:{t:9.7,h:9.3,m:10.2}, 2026:{t:8.3,h:7.2,m:9.8} },
-  'Coquimbo':            { 2024:{t:8.2,h:8.0,m:8.5}, 2025:{t:8.8,h:7.6,m:10.4}, 2026:{t:9.1,h:7.9,m:10.6} },
-  'Valparaíso':          { 2024:{t:7.7,h:7.2,m:8.3}, 2025:{t:8.9,h:8.6,m:9.1}, 2026:{t:10.2,h:9.4,m:11.3} },
-  'O\'Higgins':          { 2024:{t:9.5,h:7.5,m:12.2}, 2025:{t:9.0,h:8.3,m:10.0}, 2026:{t:10.2,h:8.5,m:12.5} },
-  'Maule':               { 2024:{t:8.5,h:7.1,m:10.2}, 2025:{t:7.3,h:5.8,m:9.3}, 2026:{t:10.0,h:8.6,m:11.8} },
-  'Ñuble':               { 2024:{t:10.2,h:9.1,m:11.7}, 2025:{t:10.4,h:9.6,m:11.3}, 2026:{t:10.1,h:8.5,m:12.3} },
-  'Biobío':              { 2024:{t:8.7,h:7.7,m:10.0}, 2025:{t:9.0,h:7.8,m:10.5}, 2026:{t:9.8,h:8.5,m:11.3} },
-  'La Araucanía':        { 2024:{t:9.0,h:7.3,m:11.2}, 2025:{t:9.8,h:8.5,m:11.5}, 2026:{t:8.7,h:7.4,m:10.3} },
-  'Los Ríos':            { 2024:{t:8.6,h:7.2,m:10.5}, 2025:{t:8.9,h:7.5,m:10.7}, 2026:{t:9.7,h:8.1,m:11.8} },
-  'Los Lagos':           { 2024:{t:4.8,h:3.7,m:6.5}, 2025:{t:6.4,h:5.9,m:7.0}, 2026:{t:7.1,h:5.7,m:8.9} },
-  'Aysén':               { 2024:{t:5.2,h:5.7,m:4.6}, 2025:{t:4.3,h:3.0,m:5.9}, 2026:{t:4.1,h:2.5,m:5.9} },
-  'Magallanes':          { 2024:{t:7.1,h:5.9,m:8.6}, 2025:{t:6.1,h:4.5,m:8.1}, 2026:{t:6.5,h:4.7,m:8.8} },
-  'Metropolitana':       { 2024:{t:8.6,h:8.2,m:9.0}, 2025:{t:9.5,h:8.6,m:10.6}, 2026:{t:9.8,h:9.2,m:10.4} },
+  'Arica y Parinacota': { 2018:{t:7.6,h:8.5,m:6.5}, 2019:{t:6.9,h:6.0,m:8.1}, 2020:{t:6.4,h:6.2,m:6.6}, 2021:{t:6.3,h:6.0,m:6.5}, 2022:{t:6.3,h:6.4,m:6.2}, 2023:{t:7.7,h:7.2,m:8.3}, 2024:{t:7.3,h:7.4,m:7.1}, 2025:{t:7.2,h:6.3,m:8.4}, 2026:{t:8.4,h:9.2,m:7.3} },
+  'Tarapacá':            { 2018:{t:8.9,h:9.0,m:8.8}, 2019:{t:7.1,h:6.7,m:7.6}, 2020:{t:9.3,h:9.5,m:9.0}, 2021:{t:10.9,h:9.8,m:12.5}, 2022:{t:8.3,h:8.5,m:8.1}, 2023:{t:7.0,h:7.7,m:5.9}, 2024:{t:5.8,h:4.9,m:7.1}, 2025:{t:10.7,h:10.3,m:11.2}, 2026:{t:9.0,h:9.7,m:8.2} },
+  'Antofagasta':         { 2018:{t:9.4,h:8.9,m:10.1}, 2019:{t:9.1,h:8.3,m:10.4}, 2020:{t:13.2,h:13.6,m:12.6}, 2021:{t:10.6,h:10.8,m:10.2}, 2022:{t:7.6,h:6.5,m:9.1}, 2023:{t:8.8,h:8.5,m:9.1}, 2024:{t:8.3,h:7.7,m:9.2}, 2025:{t:6.8,h:6.3,m:7.5}, 2026:{t:7.3,h:6.2,m:8.8} },
+  'Atacama':             { 2018:{t:9.6,h:10.0,m:9.0}, 2019:{t:8.6,h:7.3,m:10.4}, 2020:{t:11.0,h:10.8,m:11.3}, 2021:{t:10.7,h:10.3,m:11.5}, 2022:{t:8.4,h:7.2,m:10.1}, 2023:{t:10.3,h:9.2,m:11.7}, 2024:{t:9.2,h:8.0,m:10.7}, 2025:{t:9.7,h:9.3,m:10.2}, 2026:{t:8.3,h:7.2,m:9.8} },
+  'Coquimbo':            { 2018:{t:8.8,h:8.0,m:9.9}, 2019:{t:7.0,h:6.4,m:7.8}, 2020:{t:13.0,h:14.4,m:11.0}, 2021:{t:9.5,h:9.1,m:10.0}, 2022:{t:9.6,h:9.3,m:9.9}, 2023:{t:8.8,h:6.9,m:11.5}, 2024:{t:8.2,h:8.0,m:8.5}, 2025:{t:8.8,h:7.6,m:10.4}, 2026:{t:9.1,h:7.9,m:10.6} },
+  'Valparaíso':          { 2018:{t:7.2,h:6.3,m:8.3}, 2019:{t:8.7,h:7.6,m:10.3}, 2020:{t:12.4,h:12.0,m:13.0}, 2021:{t:10.7,h:9.9,m:11.8}, 2022:{t:8.4,h:8.1,m:8.8}, 2023:{t:8.1,h:8.1,m:8.0}, 2024:{t:7.7,h:7.2,m:8.3}, 2025:{t:8.9,h:8.6,m:9.1}, 2026:{t:10.2,h:9.4,m:11.3} },
+  'O\'Higgins':          { 2018:{t:7.2,h:6.6,m:8.0}, 2019:{t:7.4,h:8.1,m:6.4}, 2020:{t:11.8,h:10.1,m:14.3}, 2021:{t:11.2,h:11.1,m:11.3}, 2022:{t:7.2,h:6.9,m:7.7}, 2023:{t:10.1,h:9.6,m:11.0}, 2024:{t:9.5,h:7.5,m:12.2}, 2025:{t:9.0,h:8.3,m:10.0}, 2026:{t:10.2,h:8.5,m:12.5} },
+  'Maule':               { 2018:{t:6.6,h:5.5,m:8.3}, 2019:{t:6.2,h:5.3,m:7.4}, 2020:{t:9.1,h:9.8,m:8.1}, 2021:{t:7.8,h:7.0,m:9.1}, 2022:{t:5.9,h:5.3,m:6.9}, 2023:{t:9.0,h:8.4,m:9.9}, 2024:{t:8.5,h:7.1,m:10.2}, 2025:{t:7.3,h:5.8,m:9.3}, 2026:{t:10.0,h:8.6,m:11.8} },
+  'Ñuble':               { 2018:{t:7.4,h:4.4,m:11.8}, 2019:{t:7.0,h:4.9,m:10.0}, 2020:{t:10.9,h:10.8,m:11.1}, 2021:{t:8.9,h:8.6,m:9.4}, 2022:{t:9.0,h:8.7,m:9.4}, 2023:{t:8.9,h:5.8,m:13.2}, 2024:{t:10.2,h:9.1,m:11.7}, 2025:{t:10.4,h:9.6,m:11.3}, 2026:{t:10.1,h:8.5,m:12.3} },
+  'Biobío':              { 2018:{t:8.4,h:7.8,m:9.3}, 2019:{t:7.6,h:6.9,m:8.6}, 2020:{t:10.1,h:10.4,m:9.7}, 2021:{t:7.4,h:7.3,m:7.6}, 2022:{t:7.6,h:6.8,m:8.7}, 2023:{t:8.1,h:7.2,m:9.4}, 2024:{t:8.7,h:7.7,m:10.0}, 2025:{t:9.0,h:7.8,m:10.5}, 2026:{t:9.8,h:8.5,m:11.3} },
+  'La Araucanía':        { 2018:{t:8.2,h:7.0,m:9.8}, 2019:{t:7.0,h:5.4,m:9.2}, 2020:{t:10.1,h:8.1,m:12.7}, 2021:{t:8.4,h:7.7,m:9.5}, 2022:{t:7.8,h:7.4,m:8.5}, 2023:{t:7.0,h:6.8,m:7.4}, 2024:{t:9.0,h:7.3,m:11.2}, 2025:{t:9.8,h:8.5,m:11.5}, 2026:{t:8.7,h:7.4,m:10.3} },
+  'Los Ríos':            { 2018:{t:5.6,h:3.8,m:8.1}, 2019:{t:5.8,h:4.1,m:8.0}, 2020:{t:10.3,h:10.4,m:10.2}, 2021:{t:9.5,h:9.9,m:9.0}, 2022:{t:6.4,h:4.5,m:9.0}, 2023:{t:6.6,h:4.5,m:9.6}, 2024:{t:8.6,h:7.2,m:10.5}, 2025:{t:8.9,h:7.5,m:10.7}, 2026:{t:9.7,h:8.1,m:11.8} },
+  'Los Lagos':           { 2018:{t:3.3,h:2.7,m:4.1}, 2019:{t:3.2,h:3.0,m:3.5}, 2020:{t:6.9,h:6.1,m:8.2}, 2021:{t:4.2,h:4.4,m:4.0}, 2022:{t:3.6,h:3.5,m:3.8}, 2023:{t:4.3,h:2.3,m:7.0}, 2024:{t:4.8,h:3.7,m:6.5}, 2025:{t:6.4,h:5.9,m:7.0}, 2026:{t:7.1,h:5.7,m:8.9} },
+  'Aysén':               { 2018:{t:3.7,h:4.4,m:2.8}, 2019:{t:4.2,h:3.6,m:5.0}, 2020:{t:7.5,h:7.8,m:7.1}, 2021:{t:5.9,h:5.3,m:6.7}, 2022:{t:6.5,h:6.1,m:6.9}, 2023:{t:5.5,h:5.5,m:5.4}, 2024:{t:5.2,h:5.7,m:4.6}, 2025:{t:4.3,h:3.0,m:5.9}, 2026:{t:4.1,h:2.5,m:5.9} },
+  'Magallanes':          { 2018:{t:4.4,h:3.3,m:5.8}, 2019:{t:3.3,h:1.9,m:5.1}, 2020:{t:7.0,h:6.8,m:7.3}, 2021:{t:5.0,h:4.2,m:6.0}, 2022:{t:4.3,h:2.9,m:6.1}, 2023:{t:4.7,h:3.4,m:6.4}, 2024:{t:7.1,h:5.9,m:8.6}, 2025:{t:6.1,h:4.5,m:8.1}, 2026:{t:6.5,h:4.7,m:8.8} },
+  'Metropolitana':       { 2018:{t:7.4,h:6.5,m:8.6}, 2019:{t:7.4,h:6.8,m:8.1}, 2020:{t:11.9,h:11.7,m:12.2}, 2021:{t:11.4,h:11.5,m:11.3}, 2022:{t:8.3,h:7.8,m:8.9}, 2023:{t:9.2,h:9.2,m:9.1}, 2024:{t:8.6,h:8.2,m:9.0}, 2025:{t:9.5,h:8.6,m:10.6}, 2026:{t:9.8,h:9.2,m:10.4} },
 };
-const NAC_HIST = { 2024:{t:8.3,h:7.6,m:9.3}, 2025:{t:8.9,h:8.1,m:10.1}, 2026:{t:9.4,h:8.6,m:10.5} };
-const AN_YEARS = [2024,2025,2026];
+const NAC_HIST = { 2018:{t:7.4,h:6.5,m:8.5}, 2019:{t:7.2,h:6.5,m:8.2}, 2020:{t:11.2,h:11.0,m:11.5}, 2021:{t:10.0,h:9.8,m:10.3}, 2022:{t:7.8,h:7.3,m:8.5}, 2023:{t:8.5,h:8.1,m:9.1}, 2024:{t:8.3,h:7.6,m:9.3}, 2025:{t:8.9,h:8.1,m:10.1}, 2026:{t:9.4,h:8.6,m:10.5} };
+
+// ─── HISTÓRICO PIB REGIONAL, VARIACIÓN INTERANUAL T1 DE CADA AÑO ──────────────────
+// Fuente: Banco Central de Chile — Base de Datos Estadísticos (BDE), cuadro "PIB regional",
+// serie trimestral referencia 2018, cálculo "Var. mismo período año anterior" (I.año vs I.año-1).
+const REG_PIB_HIST = {
+  'Arica y Parinacota': { 2018:3.8, 2019:-5.2, 2020:3.1, 2021:2.7, 2022:11.2, 2023:0.7, 2024:8.1, 2025:3.6, 2026:-1.9 },
+  'Tarapacá':            { 2018:4.7, 2019:2.7, 2020:7.0, 2021:-3.0, 2022:7.3, 2023:-0.7, 2024:9.2, 2025:-15.9, 2026:5.5 },
+  'Antofagasta':         { 2018:21.6, 2019:-4.6, 2020:3.7, 2021:-4.0, 2022:-4.3, 2023:2.9, 2024:10.2, 2025:4.7, 2026:-5.3 },
+  'Atacama':             { 2018:-3.9, 2019:-7.0, 2020:4.5, 2021:5.0, 2022:6.1, 2023:-2.4, 2024:4.6, 2025:11.4, 2026:10.5 },
+  'Coquimbo':            { 2018:3.5, 2019:0.8, 2020:1.8, 2021:-1.5, 2022:-0.8, 2023:2.8, 2024:4.4, 2025:2.8, 2026:-1.0 },
+  'Valparaíso':          { 2018:-0.2, 2019:-0.1, 2020:-0.7, 2021:-2.6, 2022:10.7, 2023:0.1, 2024:2.2, 2025:2.8, 2026:0.3 },
+  'O\'Higgins':          { 2018:3.6, 2019:-2.2, 2020:-3.5, 2021:3.8, 2022:-1.0, 2023:-0.4, 2024:4.7, 2025:4.0, 2026:-6.6 },
+  'Maule':               { 2018:5.2, 2019:1.6, 2020:-2.9, 2021:4.9, 2022:4.0, 2023:-2.4, 2024:6.0, 2025:7.0, 2026:-3.2 },
+  'Ñuble':               { 2018:9.5, 2019:-1.8, 2020:2.1, 2021:0.2, 2022:9.3, 2023:-3.9, 2024:6.2, 2025:4.3, 2026:-2.9 },
+  'Biobío':              { 2018:6.3, 2019:1.1, 2020:0.3, 2021:1.4, 2022:5.6, 2023:3.4, 2024:5.7, 2025:4.1, 2026:-5.2 },
+  'La Araucanía':        { 2018:4.0, 2019:-0.4, 2020:0.5, 2021:-0.4, 2022:9.0, 2023:1.9, 2024:3.8, 2025:5.1, 2026:-2.4 },
+  'Los Ríos':            { 2018:6.0, 2019:1.3, 2020:-1.0, 2021:-0.7, 2022:7.8, 2023:-1.9, 2024:6.6, 2025:1.7, 2026:2.2 },
+  'Los Lagos':           { 2018:5.0, 2019:6.8, 2020:0.8, 2021:-5.1, 2022:7.8, 2023:3.7, 2024:1.1, 2025:5.3, 2026:1.2 },
+  'Aysén':               { 2018:6.3, 2019:5.1, 2020:-9.1, 2021:2.5, 2022:-0.4, 2023:10.0, 2024:-1.0, 2025:11.0, 2026:-2.6 },
+  'Magallanes':          { 2018:-3.4, 2019:5.5, 2020:2.4, 2021:-15.1, 2022:10.8, 2023:1.5, 2024:8.4, 2025:7.3, 2026:-1.3 },
+  'Metropolitana':       { 2018:3.3, 2019:3.1, 2020:-1.5, 2021:0.6, 2022:7.4, 2023:1.2, 2024:1.1, 2025:2.4, 2026:1.0 },
+};
+const NAC_PIB_HIST = { 2018:4.6, 2019:1.3, 2020:-0.4, 2021:0.4, 2022:6.0, 2023:0.0, 2024:3.5, 2025:2.9, 2026:-0.5 };
+
+const AN_YEARS = [2018,2019,2020,2021,2022,2023,2024,2025,2026];
 const AN_SEX = [ {v:'t',l:'Total'}, {v:'h',l:'Hombre'}, {v:'m',l:'Mujer'} ];
 
 // ─── CHART HELPERS ────────────────────────────────────────────────────────────
@@ -557,24 +582,24 @@ const TOPICS = {
   desempleo: {
     label: '📉 Desempleo',
     hasSex: true,
-    years: [2024,2025,2026],
+    years: [2018,2019,2020,2021,2022,2023,2024,2025,2026],
     yearLabel: 'Años (trimestre marzo-mayo)',
     unit: '%',
     chartTitle: 'Comparación de desempleo — trimestre móvil marzo-mayo',
-    source: 'Fuente: INE, Banco de Datos ENE · 2024-2026',
+    source: 'Fuente: INE, Banco de Datos ENE · 2018-2026',
     note: null,
     getVal: (r,y,s) => (r==='__NAC__' ? NAC_HIST[y] : HIST[r][y])[s]
   },
   pib: {
     label: '📈 PIB Regional (crecimiento)',
     hasSex: false,
-    years: [2026],
-    yearLabel: 'Período (T1 = ene-mar)',
+    years: [2018,2019,2020,2021,2022,2023,2024,2025,2026],
+    yearLabel: 'Años (T1, variación interanual)',
     unit: '%',
-    chartTitle: 'PIB Regional — variación interanual',
-    source: 'Fuente: Banco Central de Chile · Primer Trimestre 2026',
-    note: '⚠️ Por ahora solo hay dato del Primer Trimestre 2026 (variación interanual). El histórico T1 2024 y T1 2025 no se pudo descargar todavía por un error temporal en bcentral.cl — se agregará cuando el sitio vuelva a responder.',
-    getVal: (r,y,s) => r==='__NAC__' ? NAC_PIB : (REG_PIB.find(x=>x.n===r)||{v:null}).v
+    chartTitle: 'PIB Regional — variación interanual del Primer Trimestre',
+    source: 'Fuente: Banco Central de Chile, BDE · Serie referencia 2018 · 2018-2026',
+    note: null,
+    getVal: (r,y,s) => r==='__NAC__' ? NAC_PIB_HIST[y] : REG_PIB_HIST[r][y]
   }
 };
 let currentTopic = 'desempleo';
@@ -608,8 +633,13 @@ function buildFiltersForTopic(k){
 
   document.getElementById('anYearLbl').textContent = topic.yearLabel;
   const yearBox = document.getElementById('anYearList');
+  // Si hay muchos años disponibles, se preseleccionan algunos repartidos (inicio/medio/fin)
+  // para no saturar el gráfico inicial; el resto queda disponible para marcar manualmente.
+  const defaultYears = topic.years.length > 4
+    ? new Set([topic.years[0], topic.years[Math.floor(topic.years.length/2)], topic.years[topic.years.length-1]])
+    : new Set(topic.years);
   yearBox.innerHTML = topic.years.map(y=>`<label style="display:flex;align-items:center;gap:6px;padding:3px 0;">
-      <input type="checkbox" class="anYear" value="${y}" checked ${topic.years.length===1?'disabled':''}> ${y}</label>`).join('');
+      <input type="checkbox" class="anYear" value="${y}" ${defaultYears.has(y)?'checked':''} ${topic.years.length===1?'disabled':''}> ${y}</label>`).join('');
 
   const sexBox = document.getElementById('anSexList');
   const sexLbl = document.getElementById('anSexLbl');
@@ -653,23 +683,32 @@ function generarComparacion(){
   const labels = regs.map(r=> r==='__NAC__' ? 'Nacional' : r);
   const getVal = (r,y,s) => topic.getVal(r,y,s);
 
+  // Gráfico de tendencia: eje X = años (orden cronológico), una línea por región
+  // (y por sexo, si corresponde), para poder ver la evolución en el tiempo.
+  const chartLabels = years.map(String);
   let datasets = [];
   let ci = 0;
   if(sexMode==='hm'){
-    years.forEach(y=>{
-      datasets.push({ label:`${y} · Hombre`, data: regs.map(r=>getVal(r,y,'h')), backgroundColor: PALETTE[ci++ % PALETTE.length] });
-      datasets.push({ label:`${y} · Mujer`,  data: regs.map(r=>getVal(r,y,'m')), backgroundColor: PALETTE[ci++ % PALETTE.length] });
+    regs.forEach(r=>{
+      const rLabel = r==='__NAC__' ? 'Nacional' : r;
+      const cH = PALETTE[ci++ % PALETTE.length];
+      const cM = PALETTE[ci++ % PALETTE.length];
+      datasets.push({ label:`${rLabel} · Hombre`, data: years.map(y=>getVal(r,y,'h')), borderColor:cH, backgroundColor:cH+'22' });
+      datasets.push({ label:`${rLabel} · Mujer`,  data: years.map(y=>getVal(r,y,'m')), borderColor:cM, backgroundColor:cM+'22' });
     });
   } else {
-    years.forEach(y=>{
-      datasets.push({ label:`${y}`, data: regs.map(r=>getVal(r,y,sexMode)), backgroundColor: PALETTE[ci++ % PALETTE.length] });
+    regs.forEach(r=>{
+      const rLabel = r==='__NAC__' ? 'Nacional' : r;
+      const c = PALETTE[ci++ % PALETTE.length];
+      datasets.push({ label:rLabel, data: years.map(y=>getVal(r,y,sexMode)), borderColor:c, backgroundColor:c+'22' });
     });
   }
 
   killChart('cAnalisis');
   CH['cAnalisis'] = new Chart(document.getElementById('cAnalisis'), {
-    type:'bar',
-    data:{ labels, datasets: datasets.map(d=>({...d, borderRadius:4})) },
+    type:'line',
+    data:{ labels: chartLabels, datasets: datasets.map(d=>({...d,
+      borderWidth:2.5, pointRadius:4, pointHoverRadius:6, pointBackgroundColor:d.borderColor, tension:.3, fill:false })) },
     options:{ responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{display:true, position:'top', labels:{font:{size:10}}},
         tooltip:{ callbacks:{ label:c=> c.dataset.label+': '+c.parsed.y.toFixed(1)+topic.unit } } },

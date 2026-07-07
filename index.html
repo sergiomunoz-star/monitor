@@ -111,6 +111,23 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
   .content,.hdr{ padding:14px 16px; }
   .tabs{ padding:0 12px; }
 }
+
+/* INFORME IMPRIMIBLE (PDF vía diálogo de impresión del navegador) */
+#reportView{ display:none; }
+@media print{
+  body > *:not(#reportView){ display:none !important; }
+  #reportView{ display:block !important; padding:10px 6px; }
+  .rep-hdr h1{ font-size:19px; color:#1a3a6b; margin-bottom:3px; }
+  .rep-hdr .rep-meta{ font-size:11px; color:#6b7280; margin-bottom:18px; }
+  .rep-section{ margin-bottom:18px; page-break-inside:avoid; }
+  .rep-section h2{ font-size:13px; color:#1a3a6b; border-bottom:1px solid #d1d5db; padding-bottom:4px; margin-bottom:8px; }
+  .rep-source{ font-size:10px; color:#9ca3af; margin-top:4px; }
+  .rep-chart{ max-width:100%; display:block; margin:0 auto; }
+  .rep-comment p{ font-size:11.5px; line-height:1.65; margin-bottom:8px; }
+  .rep-footer{ font-size:9.5px; color:#9ca3af; border-top:1px solid #d1d5db; padding-top:8px; margin-top:20px; }
+  #reportView table{ width:100%; font-size:10.5px; border-collapse:collapse; }
+  #reportView th, #reportView td{ padding:4px 6px; border-bottom:1px solid #e5e7eb; text-align:left; }
+}
 </style>
 </head>
 <body>
@@ -306,6 +323,7 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
       </div>
     </div>
     <button class="btn bp" style="margin-top:16px;" onclick="generarComparacion()">Generar comparación</button>
+    <button class="btn" id="btnInforme" style="margin-top:16px;margin-left:8px;background:#eef2ff;color:#1a3a6b;" onclick="generarInformePDF()">🖨️ Generar informe (PDF)</button>
   </div>
 
   <div class="cc full" style="margin-bottom:14px;">
@@ -335,6 +353,9 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
   <a href="https://datos.gob.cl" target="_blank">datos.gob.cl</a>
   <a href="https://observatorio.ministeriodesarrollosocial.gob.cl" target="_blank">CASEN</a>
 </div>
+
+<!-- Contenedor del informe imprimible: oculto en pantalla, se muestra solo al imprimir/exportar a PDF -->
+<div id="reportView"></div>
 
 <script>
 // ─── DATOS NACIONALES (Banco Mundial + INE, obtenidos julio 2026) ───────────────────
@@ -736,6 +757,91 @@ function generarComparacion(){
     }
     return `<tr>${cells}</tr>`;
   }).join('');
+}
+
+// ─── INFORME PDF (vía diálogo de impresión del navegador, sin librerías externas) ────
+// Arma un documento imprimible con: alcance del análisis, gráfico de tendencia (como
+// imagen), comentario en lenguaje simple generado con reglas a partir de los datos ya
+// cargados, y la tabla de detalle. El usuario elige "Guardar como PDF" en el diálogo.
+function generarInformePDF(){
+  const topic = TOPICS[currentTopic];
+  const regs = Array.from(document.querySelectorAll('#anRegList input:checked')).map(i=>i.value);
+  const years = Array.from(document.querySelectorAll('.anYear:checked')).map(i=>parseInt(i.value)).sort();
+  const sexMode = topic.hasSex ? (document.querySelector('input[name="anSex"]:checked')||{value:'t'}).value : 't';
+
+  if(regs.length===0 || years.length===0 || !CH['cAnalisis']){
+    alert('Primero elige región(es) y período(s), y presiona "Generar comparación" antes de emitir el informe.');
+    return;
+  }
+
+  const getVal = (r,y,s) => topic.getVal(r,y,s);
+  const regionLabel = r => r==='__NAC__' ? 'Nacional' : r;
+  const sexLabelTxt = {t:'total', h:'hombres', m:'mujeres', hm:'hombres y mujeres (comparados)'}[sexMode];
+
+  // Comentario en lenguaje simple: reglas fijas sobre los datos ya cargados (sin IA,
+  // sin llamadas externas) — tendencia, máximo/mínimo del período y comparación vs. nacional.
+  const comentarios = [];
+  regs.forEach(r=>{
+    const label = regionLabel(r);
+    const seriesModes = sexMode==='hm' ? ['h','m'] : [sexMode];
+    seriesModes.forEach(s=>{
+      const vals = years.map(y=>getVal(r,y,s));
+      const first = vals[0], last = vals[vals.length-1];
+      const delta = +(last-first).toFixed(1);
+      const dirTxt = delta>0.05 ? `subió ${Math.abs(delta).toFixed(1)}${topic.unit}` : (delta<-0.05 ? `bajó ${Math.abs(delta).toFixed(1)}${topic.unit}` : 'se mantuvo prácticamente estable');
+      const maxIdx = vals.indexOf(Math.max(...vals));
+      const minIdx = vals.indexOf(Math.min(...vals));
+      const sTag = sexMode==='hm' ? (s==='h'?' — hombres':' — mujeres') : '';
+      let frase = `<strong>${label}${sTag}:</strong> entre ${years[0]} y ${years[years.length-1]} ${dirTxt} (de ${first.toFixed(1)}${topic.unit} a ${last.toFixed(1)}${topic.unit}). `
+        + `El valor más alto del período fue ${vals[maxIdx].toFixed(1)}${topic.unit} en ${years[maxIdx]}, y el más bajo ${vals[minIdx].toFixed(1)}${topic.unit} en ${years[minIdx]}.`;
+      if(r!=='__NAC__' && regs.includes('__NAC__')){
+        const nacLast = getVal('__NAC__', years[years.length-1], s);
+        const diffNac = +(last-nacLast).toFixed(1);
+        if(Math.abs(diffNac) > 0.05){
+          frase += ` En ${years[years.length-1]} estuvo ${diffNac>0?'por sobre':'por debajo de'} el promedio nacional (${nacLast.toFixed(1)}${topic.unit}) en ${Math.abs(diffNac).toFixed(1)} puntos.`;
+        } else {
+          frase += ` En ${years[years.length-1]} estuvo prácticamente en línea con el promedio nacional (${nacLast.toFixed(1)}${topic.unit}).`;
+        }
+      }
+      comentarios.push(frase);
+    });
+  });
+
+  const fecha = new Date().toLocaleDateString('es-CL', {day:'numeric', month:'long', year:'numeric'});
+  const regionesTxt = regs.map(regionLabel).join(', ');
+  const aniosTxt = years.join(', ');
+  const chartImg = CH['cAnalisis'].toBase64Image();
+  const tableHtml = document.getElementById('anTable').outerHTML;
+  const topicLabelTxt = topic.label.replace(/^\S+\s/, ''); // quita el emoji del rótulo
+
+  document.getElementById('reportView').innerHTML = `
+    <div class="rep-hdr">
+      <h1>Informe de Análisis — Monitor Económico y Social de Chile</h1>
+      <div class="rep-meta">Generado el ${fecha} · Tema: ${topicLabelTxt}</div>
+    </div>
+    <div class="rep-section">
+      <h2>Alcance del análisis</h2>
+      <p style="font-size:11.5px;line-height:1.6;">Regiones incluidas: ${regionesTxt}.<br>Períodos comparados: ${aniosTxt}.<br>Desglose: ${sexLabelTxt}.</p>
+      <div class="rep-source">${topic.source}</div>
+    </div>
+    <div class="rep-section">
+      <h2>Gráfico de tendencia</h2>
+      <img src="${chartImg}" class="rep-chart">
+    </div>
+    <div class="rep-section">
+      <h2>Comentario en lenguaje simple</h2>
+      <div class="rep-comment">${comentarios.map(c=>`<p>${c}</p>`).join('')}</div>
+    </div>
+    <div class="rep-section">
+      <h2>Detalle de datos</h2>
+      ${tableHtml}
+    </div>
+    <div class="rep-footer">
+      Este informe se generó automáticamente a partir de los datos oficiales ya cargados en este monitor (ver fuente citada arriba). El comentario en lenguaje simple se construye con reglas fijas sobre esos mismos datos, sin intervención de un modelo de lenguaje; es un apoyo referencial y no reemplaza el análisis de un especialista.
+    </div>
+  `;
+
+  setTimeout(()=>{ window.print(); }, 120);
 }
 
 // ─── TAB SWITCHING ────────────────────────────────────────────────────────────

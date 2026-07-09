@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Monitor Económico y Social — Chile</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root { color-scheme: light; }
@@ -415,6 +415,11 @@ const DATA = {
   pov: { labels:['2013','2015','2017','2020','2022'], vals:[13.9,11.2,8.5,10.7,6.5] },
   pop: { labels:['2017','2018','2019','2020','2021','2022','2023','2024'], vals:[18.5,18.7,18.9,19.1,19.3,19.6,19.7,19.8] },
 };
+
+// ─── CHART REGISTRY ──────────────────────────────────────────────────────────────
+const CH = {};
+function killChart(id) { if (CH[id]) { try { CH[id].destroy(); } catch(e){} delete CH[id]; } }
+
 
 // ─── QUARTERLY UNEMPLOYMENT DATA (ENE — Serie histórica INE) ────────────────
 // * feb-abr 2026 confirmado directamente desde ine.gob.cl el 25/06/2026
@@ -1176,6 +1181,141 @@ function generarInformePDF() {
   }
 
   doc.save('informe-monitor-chile-'+new Date().toISOString().slice(0,10)+'.pdf');
+}
+
+// ─── DATOS REGIONALES ENE mar-may 2026 ─────────────────────────────────────────
+const NAC_D = 9.4;
+const REG = [
+  { n:'Aysén',              d:4.1,  p:107  },
+  { n:'Magallanes',         d:6.5,  p:177  },
+  { n:'Los Lagos',          d:7.1,  p:887  },
+  { n:'Antofagasta',        d:7.3,  p:694  },
+  { n:'Atacama',            d:8.3,  p:323  },
+  { n:'Arica y Parinacota', d:8.4,  p:243  },
+  { n:'La Araucanía',       d:8.7,  p:1005 },
+  { n:'Tarapacá',           d:9.0,  p:385  },
+  { n:'Coquimbo',           d:9.1,  p:805  },
+  { n:'Los Ríos',           d:9.7,  p:415  },
+  { n:'Biobío',             d:9.8,  p:1555 },
+  { n:'Metropolitana',      d:9.8,  p:8127 },
+  { n:'Maule',              d:10.0, p:1079 },
+  { n:'Ñuble',              d:10.1, p:509  },
+  { n:"O'Higgins",          d:10.2, p:985  },
+  { n:'Valparaíso',         d:10.2, p:1960 },
+];
+
+// ─── RENDER HELPERS ──────────────────────────────────────────────────────────────
+function _mkChart(id, type, labels, datasets, opts={}) {
+  killChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  CH[id] = new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: datasets.length > 1 } },
+      ...opts
+    }
+  });
+}
+
+// ─── RENDER NACIONAL ─────────────────────────────────────────────────────────────
+function renderNational() {
+  const blue = '#3b82f6', green = '#10b981', orange = '#f59e0b',
+        red = '#ef4444', purple = '#8b5cf6', sky = '#0ea5e9';
+  const def = (color) => ({
+    backgroundColor: color+'33', borderColor: color,
+    borderWidth: 2, pointRadius: 4, fill: true, tension: 0.3
+  });
+
+  // PIB
+  _mkChart('cPIB','bar', DATA.pib.labels,
+    [{label:'PIB % anual', data:DATA.pib.vals,
+      backgroundColor: DATA.pib.vals.map(v=>v>=0?blue+'99':red+'99'),
+      borderColor: DATA.pib.vals.map(v=>v>=0?blue:red), borderWidth:1.5}],
+    { plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>v+'%'}}} });
+
+  // IPC
+  _mkChart('cIPC','bar', DATA.ipc.labels,
+    [{label:'IPC % anual', data:DATA.ipc.vals,
+      backgroundColor:orange+'88', borderColor:orange, borderWidth:1.5}],
+    { plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>v+'%'}}} });
+
+  // Desempleo
+  _mkChart('cDesemp','line', DATA.desemp.labels,
+    [{label:'Desempleo %', data:DATA.desemp.vals,
+      ...def(red), pointBackgroundColor:DATA.desemp.vals.map((_,i)=>i===DATA.desemp.vals.length-1?'#059669':red)}],
+    { plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>v+'%'},suggestedMin:6,suggestedMax:12}} });
+
+  // GDPpc
+  _mkChart('cGDPpc','line', DATA.gdppc.labels,
+    [{label:'PIB per cápita USD', data:DATA.gdppc.vals, ...def(purple)}],
+    { plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()}}} });
+
+  // Pobreza
+  _mkChart('cPov','bar', DATA.pov.labels,
+    [{label:'Pobreza %', data:DATA.pov.vals,
+      backgroundColor:orange+'88', borderColor:orange, borderWidth:1.5}],
+    { plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>v+'%'}}} });
+
+  // Población
+  _mkChart('cPob','line', DATA.pop.labels,
+    [{label:'Población (millones)', data:DATA.pop.vals, ...def(sky)}],
+    { plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>v+'M'}}} });
+}
+
+// ─── RENDER REGIONAL ─────────────────────────────────────────────────────────────
+function renderRegional() {
+  const labels = REG.map(r=>r.n);
+  const colors = REG.map(r=>r.d<NAC_D?'#10b981':'#ef4444');
+  const colorsB = REG.map(r=>r.d<NAC_D?'#059669':'#dc2626');
+
+  // Desempleo horizontal bar
+  _mkChart('cRegD','bar', labels,
+    [{label:'Tasa de desocupación %', data:REG.map(r=>r.d),
+      backgroundColor:colors.map(c=>c+'cc'), borderColor:colorsB, borderWidth:1.5}],
+    {
+      indexAxis:'y',
+      plugins:{
+        legend:{display:false},
+        annotation:{
+          annotations:{
+            nacLine:{type:'line',xMin:NAC_D,xMax:NAC_D,
+              borderColor:'#1a3a6b',borderWidth:2,borderDash:[5,4],
+              label:{display:true,content:'Media '+NAC_D+'%',position:'end',
+                     backgroundColor:'#1a3a6b',color:'#fff',font:{size:10}}}
+          }
+        }
+      },
+      scales:{x:{ticks:{callback:v=>v+'%'},min:0,max:14},y:{ticks:{font:{size:11}}}}
+    });
+
+  // Población horizontal bar
+  _mkChart('cRegP','bar', labels,
+    [{label:'Población (miles)', data:REG.map(r=>r.p),
+      backgroundColor:'#3b82f688', borderColor:'#3b82f6', borderWidth:1.5}],
+    { indexAxis:'y', plugins:{legend:{display:false}},
+      scales:{x:{ticks:{callback:v=>v.toLocaleString()}}} });
+
+  // Table
+  const tbody = document.getElementById('regBody');
+  if (tbody) {
+    tbody.innerHTML = REG.map((r,i)=>{
+      const diff = (r.d - NAC_D).toFixed(1);
+      const sign = diff > 0 ? '+' : '';
+      const color = r.d < NAC_D ? '#059669' : '#dc2626';
+      const barW = Math.round((r.d / 14)*100);
+      return `<tr>
+        <td>${i+1}</td>
+        <td>${r.n}</td>
+        <td style="font-weight:600;color:${color}">${r.d.toFixed(1)}%</td>
+        <td><div style="background:${color}44;border-radius:3px;height:8px;width:${barW}%;min-width:4px;border:1px solid ${color}66;"></div></td>
+        <td>${r.p.toLocaleString()}</td>
+        <td style="color:${color};font-weight:600">${sign}${diff} pp</td>
+      </tr>`;
+    }).join('');
+  }
 }
 
 // ─── TAB SWITCHING ────────────────────────────────────────────────────────────────────────────

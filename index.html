@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Monitor Económico y Social — Chile</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root { color-scheme: light; }
 *{ box-sizing:border-box; margin:0; padding:0; }
@@ -149,8 +150,6 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
   <div class="tab active" onclick="sw('nacional')">📊 Nacional</div>
   <div class="tab" onclick="sw('regiones')">🗺️ Regiones</div>
   <div class="tab" onclick="sw('analisis')">📈 Análisis</div>
-  <div class="tab" onclick="sw('bcch')">🏦 Banco Central</div>
-  <div class="tab" onclick="sw('fuentes')">ℹ️ Fuentes</div>
 </div>
 
 <div class="content">
@@ -364,7 +363,7 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
 
     <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
       <button class="btn bp" onclick="renderAnalysis()">Generar comparación</button>
-      <button class="btn" style="background:#f3f4f6;color:#374151;" onclick="generarInforme()">🖨️ Generar informe</button>
+      <button class="btn" style="background:#059669;color:#fff;" onclick="generarInformePDF()">📄 Generar informe PDF</button>
     </div>
   </div>
 
@@ -392,15 +391,6 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
       <table style="width:100%;border-collapse:collapse;font-size:12px;" id="aDetalleTbl"></table>
     </div>
   </div>
-
-  <!-- INFORME BOX -->
-  <div id="informeBox" style="display:none;background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:14px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <strong style="font-size:13px;color:#1a1a2e;">📄 Informe — <span id="informeFecha"></span></strong>
-      <div style="display:flex;gap:8px;">
-        <button class="btn bp" style="padding:5px 14px;font-size:12px;" onclick="copiarInforme()">📋 Copiar</button>
-        <button class="btn" style="background:#f3f4f6;color:#374151;padding:5px 12px;font-size:12px;" onclick="document.getElementById('informeBox').style.display='none'">✕</button>
-      </div>
     </div>
     <pre id="informeTexto" style="font-family:monospace;font-size:11px;color:#374151;white-space:pre-wrap;background:#f9fafb;padding:14px;border-radius:6px;line-height:1.7;max-height:420px;overflow-y:auto;margin:0;"></pre>
   </div>
@@ -410,117 +400,10 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
   </div>
 </div>
 
-<!-- ══════════════ BANCO CENTRAL ══════════════ -->
-<div id="p-bcch" class="panel">
-
-  <div class="icard">
-    <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;">
-      <span style="font-size:28px">🏦</span>
-      <div>
-        <h3 style="margin-bottom:5px;">Conexión en vivo — API BDEstat del Banco Central de Chile</h3>
-        <p style="font-size:12px;color:#6b7280;line-height:1.6;">El Banco Central ofrece acceso gratuito a su base estadística (BDEstat). Primero <a href="https://si3.bcentral.cl/SieteRestWS" target="_blank" style="color:#2563a8;font-weight:600;">regístrate en si3.bcentral.cl</a> (es gratis, solo necesitas un correo). Luego ingresa tus credenciales para cargar datos en tiempo real de tipo de cambio, TPM, IPC mensual e IMACEC.</p>
-      </div>
-    </div>
-    <div class="frow">
-      <div class="fg">
-        <label>Usuario (correo BDEstat)</label>
-        <input type="email" id="bcU" placeholder="tucorreo@ejemplo.cl">
-      </div>
-      <div class="fg">
-        <label>Contraseña BDEstat</label>
-        <input type="password" id="bcP" placeholder="Contraseña">
-      </div>
-      <button class="btn bp" id="btnBc" onclick="loadBCCH()">Conectar y cargar</button>
-    </div>
-    <div id="bcSt"></div>
-  </div>
-
-  <div id="bcRes" style="display:none;">
-    <div class="scgrid" id="bcCards"></div>
-    <div class="cg" style="margin-top:14px;">
-      <div class="cc">
-        <div class="ct">Tipo de Cambio USD/CLP</div>
-        <div class="cs">Fuente: Banco Central de Chile · últimos 12 meses</div>
-        <div class="cw"><canvas id="cTCO"></canvas></div>
-      </div>
-      <div class="cc">
-        <div class="ct">Tasa de Política Monetaria — TPM (%)</div>
-        <div class="cs">Fuente: Banco Central de Chile</div>
-        <div class="cw"><canvas id="cTPM"></canvas></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="icard">
-    <h3>📈 Series disponibles en la API del Banco Central</h3>
-    <div class="sgrid">
-      <div class="sitem"><h4>Tipo de Cambio USD/CLP</h4><code style="font-size:10px;color:#6b7280">F073.TCO.PRE.Z.D</code></div>
-      <div class="sitem"><h4>Tasa Política Monetaria</h4><code style="font-size:10px;color:#6b7280">F022.TPM.TIN.INS.M</code></div>
-      <div class="sitem"><h4>IPC Mensual</h4><code style="font-size:10px;color:#6b7280">F073.IPC.IND.Z.Z.EP18.Z.Z.0</code></div>
-      <div class="sitem"><h4>IMACEC</h4><code style="font-size:10px;color:#6b7280">F032.IMC.IND.Z.Z.EP18.Z.Z.0</code></div>
-      <div class="sitem"><h4>Tipo de Cambio EUR/CLP</h4><code style="font-size:10px;color:#6b7280">F072.TCO.PRE.Z.D</code></div>
-      <div class="sitem"><h4>Tasas Captación 30-89 días</h4><code style="font-size:10px;color:#6b7280">F019.CAP.TIN.INS.M.90.M</code></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════ FUENTES ══════════════ -->
-<div id="p-fuentes" class="panel">
-  <div class="icard">
-    <h3>📚 Fuentes de datos — Cómo acceder a cada una</h3>
-    <div class="sgrid" style="margin-top:4px;">
-      <div class="sitem">
-        <h4>🏦 Banco Central de Chile</h4>
-        <p>API REST gratuita (requiere registro) para tipo de cambio, tasas, TPM, IPC, IMACEC. Datos diarios y mensuales desde los años 80.</p>
-        <a href="https://si3.bcentral.cl" target="_blank">→ si3.bcentral.cl (registro gratis)</a>
-      </div>
-      <div class="sitem">
-        <h4>📊 INE — Inst. Nacional de Estadísticas</h4>
-        <p>ENE por región (empleo/desempleo), IPC regional, Censo 2017, proyecciones de población. Publicaciones mensuales y trimestrales.</p>
-        <a href="https://www.ine.gob.cl/estadisticas" target="_blank">→ ine.gob.cl</a>
-      </div>
-      <div class="sitem">
-        <h4>💼 SII — Impuestos Internos</h4>
-        <p>Empresas activas, renta, IVA, declaraciones y estadísticas tributarias por región y actividad económica. Datos anuales.</p>
-        <a href="https://www.sii.cl/estadisticas" target="_blank">→ sii.cl/estadisticas</a>
-      </div>
-      <div class="sitem">
-        <h4>🌐 Banco Mundial</h4>
-        <p>API completamente abierta y sin registro. PIB, inflación, desempleo, pobreza, población. Los indicadores nacionales de este monitor provienen de aquí.</p>
-        <a href="https://data.worldbank.org/country/chile" target="_blank">→ data.worldbank.org</a>
-      </div>
-      <div class="sitem">
-        <h4>🏘️ CASEN — Min. Desarrollo Social</h4>
-        <p>Encuesta de Caracterización Socioeconómica Nacional. Pobreza, ingresos y acceso a servicios por región. Se levanta cada 2–3 años.</p>
-        <a href="https://observatorio.ministeriodesarrollosocial.gob.cl" target="_blank">→ observatorio.mds.cl</a>
-      </div>
-      <div class="sitem">
-        <h4>📁 datos.gob.cl</h4>
-        <p>Portal oficial de datos abiertos. Centraliza datasets de INE, SII, Ministerios y otros organismos en CSV, JSON y XLS.</p>
-        <a href="https://datos.gob.cl" target="_blank">→ datos.gob.cl</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="icard">
-    <h3>🔄 Cómo actualizar los datos</h3>
-    <p style="font-size:12px;color:#6b7280;line-height:1.7;">Este monitor recibe una <strong>actualización semanal automática</strong> de datos cada lunes. También puedes pedir a Claude que actualice los datos en cualquier momento escribiendo:<br><br>
-    <code style="background:#f3f4f6;padding:4px 10px;border-radius:5px;font-size:12px;">"Actualiza el monitor de Chile con los datos más recientes"</code><br><br>
-    Para conectar datos en vivo del Banco Central (tipo de cambio, TPM, IPC diario), ve a la pestaña <strong>🏦 Banco Central</strong> y agrega tus credenciales BDEstat gratuitas.</p>
-  </div>
-</div>
 
 </div><!-- /content -->
 
-<div class="footer">
-  <span>Fuentes</span>
-  <a href="https://si3.bcentral.cl" target="_blank">Banco Central</a>
-  <a href="https://www.ine.gob.cl" target="_blank">INE</a>
-  <a href="https://www.sii.cl/estadisticas" target="_blank">SII</a>
-  <a href="https://data.worldbank.org/country/chile" target="_blank">Banco Mundial</a>
-  <a href="https://datos.gob.cl" target="_blank">datos.gob.cl</a>
-  <a href="https://observatorio.ministeriodesarrollosocial.gob.cl" target="_blank">CASEN</a>
-</div>
+
 
 <script>
 // ─── DATOS NACIONALES (Banco Mundial, obtenidos junio 2026) ───────────────────
@@ -1065,57 +948,153 @@ function _renderPibDetalleTable(anios) {
   html+=`</tbody>`; tbl.innerHTML=html;
 }
 
-// ─── GENERAR INFORME ──────────────────────────────────────────────────────────
-function generarInforme() {
-  const now=new Date();
-  const fecha=now.toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('informeFecha').textContent=fecha;
-  const d=_aLastData;
-  let txt=`═══════════════════════════════════════════════════════\n  MONITOR ECONÓMICO-SOCIAL DE CHILE — GRUPO-M\n  Informe: ${fecha}\n═══════════════════════════════════════════════════════\n\n`;
-  if (!d.tipo) { txt+='Configure los filtros y presione "Generar comparación" primero.'; }
-  else if (d.tipo.startsWith('desemp')) {
-    const gMap={total:'Total',hombres:'Solo Hombres',mujeres:'Solo Mujeres',comparar:'H vs. M'};
-    txt+=`INDICADOR: Tasa de Desocupación — ${gMap[d.genero]||'Total'}\n`;
-    txt+=`Último dato nacional: 9.4% (ENE mar-may 2026, INE)\n`;
-    txt+=`Promedio: ${document.getElementById('aStat2').textContent}  Máx: ${document.getElementById('aStat3').textContent}  Mín: ${document.getElementById('aStat4').textContent}\n\n`;
-    if (d.regs) {
-      txt+=`REGIONES ANALIZADAS: ${d.regs.join(', ')}\n`;
-      if (d.years) {
-        txt+=`AÑOS: ${d.years.join(', ')}\n`;
-        txt+=`${'─'.repeat(60)}\n`;
-        txt+=`${'Región'.padEnd(25)}`;
-        d.years.forEach(y=>txt+=String(y).padStart(10)); txt+='\n';
-        txt+=`${'─'.repeat(60)}\n`;
-        d.regs.forEach(r=>{
-          txt+=r.padEnd(25);
-          d.years.forEach(y=>{ const v=REG_ANUAL[r]?.[y]; txt+=(v!=null?v.toFixed(1)+'%':'—').padStart(10); });
-          txt+='\n';
-        });
-        txt+=`${'─'.repeat(60)}\n`;
-      }
-    }
-  } else if (d.tipo==='pib') {
-    txt+=`INDICADOR: PIB Regional (% crecimiento)\n`;
-    d.anios.forEach(y=>{
-      txt+=`\nAño ${y} — PIB Nacional: ${PIB_NAC[y]>=0?'+':''}${PIB_NAC[y]}%\n`;
-      txt+=`${'─'.repeat(45)}\n`;
-      const sorted=[...(PIB_REG[y]||[])].sort((a,b)=>b.v-a.v);
-      sorted.forEach(r=>txt+=`${r.n.padEnd(25)} ${((r.v>=0?'+':'')+r.v.toFixed(1)+'%').padStart(8)}  vs Nac: ${((r.v-PIB_NAC[y]>=0?'+':'')+((r.v-PIB_NAC[y]).toFixed(1))+'pp').padStart(8)}\n`);
+// ─── GENERAR INFORME PDF ─────────────────────────────────────────────────────
+function generarInformePDF() {
+  const jspdf = window.jspdf;
+  if (!jspdf) { alert('La librería PDF no está disponible. Verifica tu conexión a internet.'); return; }
+  const { jsPDF } = jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W=210, H=297, mg=14, cW=210-mg*2;
+  let y = mg;
+
+  // ── Header ──────────────────────────────────────────────────────────────────
+  doc.setFillColor(26,58,107);
+  doc.rect(0,0,W,30,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold'); doc.setFontSize(15);
+  doc.text('Monitor Económico y Social — Chile', mg, 13);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.text('GRUPO-M · Análisis Económico Regional', mg, 20);
+  const fecha = new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
+  doc.text('Informe: '+fecha, W-mg, 20, {align:'right'});
+  y = 38;
+
+  // ── Título del análisis ──────────────────────────────────────────────────────
+  const titleEl = document.getElementById('aTitle');
+  const srcEl   = document.getElementById('aSrc');
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(26,58,107);
+  doc.text(titleEl?.textContent||'Análisis', mg, y); y += 6;
+  doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(120,120,120);
+  doc.text(srcEl?.textContent||'', mg, y); y += 8;
+
+  // ── 5 Stat cards ────────────────────────────────────────────────────────────
+  const sIds  = ['aStat1','aStat2','aStat3','aStat4','aStat5'];
+  const sLbls = ['Último dato','Promedio','Máximo','Mínimo','Variación'];
+  const crd = cW/5;
+  sIds.forEach((id,i) => {
+    const val = document.getElementById(id)?.textContent||'—';
+    const x = mg + i*crd;
+    doc.setFillColor(248,250,252); doc.setDrawColor(220,220,220);
+    doc.roundedRect(x, y, crd-1.5, 17, 2, 2, 'FD');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(26,26,46);
+    doc.text(val, x+crd/2-0.75, y+8, {align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(130);
+    doc.text(sLbls[i], x+crd/2-0.75, y+14, {align:'center'});
+  });
+  y += 22;
+
+  // ── Gráfico (canvas → imagen) ────────────────────────────────────────────────
+  const canvas = document.getElementById('cAnalisis');
+  if (canvas) {
+    try {
+      const img = canvas.toDataURL('image/png');
+      const chartH = cW * 0.48;
+      doc.addImage(img, 'PNG', mg, y, cW, chartH);
+      y += chartH + 8;
+    } catch(e) { console.warn('No se pudo capturar el gráfico:', e); }
+  }
+
+  // ── Tabla de datos ────────────────────────────────────────────────────────────
+  const d = window._aLastData || {};
+  if (d.tipo === 'desemp-anual' && d.regs && d.years) {
+    if (y > H - 50) { doc.addPage(); y = mg; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(26,58,107);
+    doc.text('Detalle de la comparación', mg, y); y += 5;
+
+    const yrs = d.years;
+    const rW = Math.min(55, cW - yrs.length*22);
+    const colW = (cW - rW) / yrs.length;
+
+    // Encabezado
+    doc.setFillColor(26,58,107); doc.rect(mg, y, cW, 7, 'F');
+    doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.text('Región', mg+2, y+5);
+    yrs.forEach((yr,i) => doc.text(yr===2026?'2026*':String(yr), mg+rW+(i+0.5)*colW, y+5, {align:'center'}));
+    y += 7;
+
+    // Filas
+    d.regs.forEach((reg, ri) => {
+      if (y > H-20) { doc.addPage(); y = mg; }
+      doc.setFillColor(ri%2===0?255:248, ri%2===0?255:250, ri%2===0?255:252);
+      doc.rect(mg, y, cW, 6, 'F');
+      doc.setTextColor(reg==='Nacional'?26:50, reg==='Nacional'?58:50, reg==='Nacional'?107:50);
+      doc.setFont('helvetica', reg==='Nacional'?'bold':'normal'); doc.setFontSize(8);
+      doc.text(reg, mg+2, y+4.5);
+      yrs.forEach((yr,i) => {
+        let v = REG_ANUAL[reg]?.[yr];
+        if (v!=null && d.genero==='hombres') v = Math.max(0,+(v+GOFFSET_H).toFixed(1));
+        if (v!=null && d.genero==='mujeres') v = +(v+GOFFSET_M).toFixed(1);
+        const nac = REG_ANUAL['Nacional']?.[yr];
+        let rgb = [55,65,81];
+        if (v!=null && nac!=null) rgb = v<nac-0.5?[5,150,105]:v>nac+0.5?[200,30,30]:[55,65,81];
+        doc.setTextColor(...rgb);
+        doc.text(v!=null?v.toFixed(1)+'%':'—', mg+rW+(i+0.5)*colW, y+4.5, {align:'center'});
+      });
+      y += 6;
+    });
+  } else if (d.tipo === 'desemp-trim' && d.regs) {
+    if (y > H - 50) { doc.addPage(); y = mg; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(26,58,107);
+    doc.text('Regiones analizadas: '+d.regs.join(', '), mg, y); y += 6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(60);
+    doc.text('Vista trimestral desde '+d.desde+'. Ver gráfico de tendencia arriba.', mg, y); y += 6;
+  } else if (d.tipo === 'pib') {
+    if (y > H - 50) { doc.addPage(); y = mg; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(26,58,107);
+    doc.text('PIB Regional — Años analizados: '+(d.anios||[]).join(', '), mg, y); y += 6;
+    (d.anios||[]).forEach(anio => {
+      if (y > H-30) { doc.addPage(); y = mg; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(26,58,107);
+      doc.text('Año '+anio+' — PIB Nacional: '+(PIB_NAC[anio]>=0?'+':'')+PIB_NAC[anio]+'%', mg, y); y+=5;
+      const sorted=[...(PIB_REG[anio]||[])].sort((a,b)=>b.v-a.v);
+      sorted.forEach((r,ri) => {
+        if(y>H-12){doc.addPage();y=mg;}
+        doc.setFillColor(ri%2?248:255,ri%2?250:255,ri%2?252:255);
+        doc.rect(mg,y,cW,5.5,'F');
+        doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(50);
+        doc.text(r.n, mg+2, y+4);
+        const vc=r.v>=0?[5,150,105]:[200,30,30];
+        doc.setTextColor(...vc);
+        doc.text((r.v>=0?'+':'')+r.v.toFixed(1)+'%', mg+cW-2, y+4, {align:'right'});
+        y+=5.5;
+      });
+      y+=4;
     });
   }
-  txt+=`\nCONTEXTO (datos más recientes)\n• PIB Chile 2024: +2.64%  • IPC mayo 2026: +0.2%\n• Remuneraciones abr 2026: +5.7%  • Informalidad: 26.8%\n\nFUENTES\n• INE ENE: bancodatosene.ine.cl\n• Banco Mundial: data.worldbank.org/country/chile\n• Banco Central: si3.bcentral.cl\n\n═══════════════════════════════════════════════════════\n`;
-  document.getElementById('informeTexto').textContent=txt;
-  document.getElementById('informeBox').style.display='block';
-  document.getElementById('informeBox').scrollIntoView({behavior:'smooth',block:'start'});
+
+  // ── Notas y fuentes ──────────────────────────────────────────────────────────
+  if (y > H-25) { doc.addPage(); y = mg; }
+  y += 4;
+  doc.setDrawColor(200); doc.line(mg, y, W-mg, y); y += 4;
+  doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(130);
+  doc.text('Fuentes: INE — ENE mar-may 2026 (Nota Estadística N°50) · Banco Central de Chile · GRUPO-M', mg, y); y += 4;
+  doc.text('Los datos regionales del trimestre mar-may 2026 son los más recientes publicados por el INE.', mg, y);
+
+  // ── Footer con paginación ────────────────────────────────────────────────────
+  const pages = doc.getNumberOfPages();
+  for (let p=1; p<=pages; p++) {
+    doc.setPage(p);
+    doc.setFillColor(243,244,246); doc.rect(0,H-9,W,9,'F');
+    doc.setDrawColor(220); doc.line(0,H-9,W,H-9);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(150);
+    doc.text('Monitor Económico y Social — Chile · GRUPO-M', mg, H-3);
+    doc.text('Pág. '+p+' / '+pages, W-mg, H-3, {align:'right'});
+  }
+
+  const nombre = 'informe-monitor-chile-'+new Date().toISOString().slice(0,10)+'.pdf';
+  doc.save(nombre);
 }
 
-function copiarInforme(){
-  const txt=document.getElementById('informeTexto').textContent;
-  navigator.clipboard.writeText(txt).then(()=>{
-    const btn=document.querySelector('#informeBox .btn.bp');
-    btn.textContent='✓ Copiado'; setTimeout(()=>btn.textContent='📋 Copiar',1800);
-  }).catch(()=> alert('Selecciona el texto manualmente y copia con Ctrl+C'));
-}
 
 // ─── DATOS REGIONALES (INE 2024) ─────────────────────────────────────────────
 const REG = [
@@ -1243,65 +1222,8 @@ function renderRegional(){
   });
 }
 
-// ─── BANCO CENTRAL LIVE ───────────────────────────────────────────────────────
-async function loadBCCH(){
-  const user = document.getElementById('bcU').value.trim();
-  const pass = document.getElementById('bcP').value.trim();
-  const st = document.getElementById('bcSt');
-  const btn = document.getElementById('btnBc');
-  if(!user||!pass){ st.className='smsg er'; st.textContent='⚠️ Ingresa tu usuario y contraseña BDEstat.'; return; }
-
-  btn.disabled=true; btn.textContent='Conectando…';
-  st.className='smsg ld'; st.textContent='⏳ Conectando con el Banco Central de Chile…';
-
-  const today = new Date().toISOString().split('T')[0];
-  const ly = new Date(Date.now()-365*24*60*60*1000).toISOString().split('T')[0];
-  const base = 'https://si3.bcentral.cl/SieteRestWS/SieteRestWS.ashx';
-
-  async function bcGet(series){
-    const url = `${base}?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}&function=GetSeries&timeseries=${series}&firstdate=${ly}&lastdate=${today}&format=json`;
-    const r = await window.cowork.callMcpTool('mcp__workspace__web_fetch',{url});
-    if(r.isError) throw new Error('Error de red');
-    const raw = r.content[0].text;
-    return JSON.parse(raw.slice(raw.indexOf('{')));
-  }
-
-  try {
-    const [tco, tpm] = await Promise.all([
-      bcGet('F073.TCO.PRE.Z.D'),
-      bcGet('F022.TPM.TIN.INS.M')
-    ]);
-    st.className='smsg ok'; st.textContent='✓ Conectado. Datos cargados.';
-    document.getElementById('bcRes').style.display='';
-    btn.textContent='✓ Conectado'; btn.disabled=false;
-
-    // TCO chart
-    const tcoSeries = tco.Series?.find(s=>s)?.Obs||[];
-    const tcoLabs = tcoSeries.slice(-60).map(o=>o.indexDateString);
-    const tcoVals = tcoSeries.slice(-60).map(o=>parseFloat(o.value));
-    line('cTCO',tcoLabs,tcoVals,'#2563a8','$','');
-
-    // TPM chart
-    const tpmSeries = tpm.Series?.find(s=>s)?.Obs||[];
-    const tpmLabs = tpmSeries.slice(-24).map(o=>o.indexDateString);
-    const tpmVals = tpmSeries.slice(-24).map(o=>parseFloat(o.value));
-    line('cTPM',tpmLabs,tpmVals,'#dc2626');
-
-    // KPI cards
-    const lastTCO = tcoVals[tcoVals.length-1];
-    const lastTPM = tpmVals[tpmVals.length-1];
-    document.getElementById('bcCards').innerHTML=`
-      <div class="sc"><div class="sv">$${Math.round(lastTCO).toLocaleString('es-CL')}</div><div class="sl">USD/CLP (último)</div></div>
-      <div class="sc"><div class="sv">${lastTPM?.toFixed(2)}%</div><div class="sl">TPM (último)</div></div>
-    `;
-  } catch(e) {
-    st.className='smsg er'; st.textContent='⚠️ Error: '+e.message+'. Verifica tus credenciales BDEstat.';
-    btn.disabled=false; btn.textContent='Reintentar';
-  }
-}
-
 // ─── TAB SWITCHING ────────────────────────────────────────────────────────────────────────────
-const TABS = ['nacional','regiones','analisis','bcch','fuentes'];
+const TABS = ['nacional','regiones','analisis'];
 let _analisisDone = false;
 function sw(name){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',TABS[i]===name));

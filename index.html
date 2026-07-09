@@ -954,427 +954,228 @@ function generarInformePDF() {
   if (!jspdf) { alert('Librería PDF no disponible. Verifica tu conexión.'); return; }
   const { jsPDF } = jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-  const W=210, H=297, mg=14, cW=210-mg*2;
+  const W=210, H=297, mg=18, cW=210-mg*2;
   let y = mg;
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
-  function addPage() { doc.addPage(); y = mg; }
-  function checkPage(need=20) { if (y > H - need) addPage(); }
-  function wrapText(txt, x, maxW, lineH) {
-    const lines = doc.splitTextToSize(txt, maxW);
-    lines.forEach(l => { checkPage(8); doc.text(l, x, y); y += lineH; });
+  function checkPage(need=20) { if (y > H-need-14) { doc.addPage(); y = mg; } }
+
+  function sectionHeader(label) {
+    checkPage(18);
+    y += 4;
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(37,99,168);
+    doc.text(label, mg, y); y += 3;
+    doc.setDrawColor(200,210,230); doc.setLineWidth(0.4);
+    doc.line(mg, y, mg+cW, y); y += 6;
   }
 
-  // ── Encabezado ───────────────────────────────────────────────────────────────
-  doc.setFillColor(26,58,107);
-  doc.rect(0,0,W,32,'F');
-  doc.setFillColor(37,99,168);
-  doc.rect(0,26,W,6,'F');
-  doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold'); doc.setFontSize(16);
-  doc.text('Monitor Económico y Social — Chile', mg, 14);
-  doc.setFont('helvetica','normal'); doc.setFontSize(9);
-  doc.text('GRUPO-M · Análisis Económico Regional', mg, 21);
-  const fecha = new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
-  doc.setFont('helvetica','italic'); doc.setFontSize(8.5);
-  doc.text('Informe generado el '+fecha, W-mg, 21, {align:'right'});
-  y = 40;
+  function bodyText(txt, indent=0) {
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(40,40,40);
+    const lines = doc.splitTextToSize(txt, cW-indent);
+    lines.forEach(l => { checkPage(8); doc.text(l, mg+indent, y); y += 5.5; });
+  }
 
-  // ── Título análisis ───────────────────────────────────────────────────────────
-  const tituloEl = document.getElementById('aTitle');
-  const fuenteEl = document.getElementById('aSrc');
-  const titulo = tituloEl?.textContent || 'Análisis';
-  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(26,58,107);
-  doc.text(titulo, mg, y); y += 7;
-  doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(120);
-  doc.text(fuenteEl?.textContent||'', mg, y); y += 9;
+  function boldStart(bold, rest, indent=0) {
+    // Write bold part then normal part inline
+    const bW = doc.getTextWidth(bold);
+    checkPage(8);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(40,40,40);
+    doc.text(bold, mg+indent, y);
+    // rest text wraps
+    const restLines = doc.splitTextToSize(rest, cW - indent - bW - 1);
+    doc.setFont('helvetica','normal');
+    doc.text(restLines[0], mg+indent+bW+0.5, y); y += 5.5;
+    restLines.slice(1).forEach(l => { checkPage(8); doc.text(l, mg+indent, y); y += 5.5; });
+  }
 
-  // ── 5 Tarjetas estadísticas ───────────────────────────────────────────────────
-  const sIds  = ['aStat1','aStat2','aStat3','aStat4','aStat5'];
-  const sLbls = ['Último dato','Promedio período','Máximo','Mínimo','Variación'];
-  const crd = cW/5;
-  sIds.forEach((id,i) => {
-    const val = document.getElementById(id)?.textContent || '—';
-    const x = mg + i*crd;
-    doc.setFillColor(248,250,252); doc.setDrawColor(209,213,219);
-    doc.roundedRect(x, y, crd-1.5, 18, 2, 2, 'FD');
-    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,26,46);
-    doc.text(val, x+(crd-1.5)/2, y+9, {align:'center'});
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(130);
-    doc.text(sLbls[i], x+(crd-1.5)/2, y+15, {align:'center'});
-  });
-  y += 24;
+  const d = window._aLastData || {};
+  const nacVal = 9.4;
+  const gMap = {total:'total', hombres:'hombres', mujeres:'mujeres', comparar:'total (comparación por género)'};
+  const tipoMap = {'desemp-anual':'Desempleo', 'desemp-trim':'Desempleo Trimestral', 'pib':'PIB Regional'};
+  const tema = tipoMap[d.tipo] || 'Desempleo';
+  const gen = d.genero || 'total';
+  const regs = (d.regs && d.regs.length) ? d.regs : ['Nacional'];
+  const yrs  = (d.years && d.years.length) ? d.years : [2026];
+  const firstYr = yrs[0], lastYr = yrs[yrs.length-1];
+  const fecha = new Date().toLocaleDateString('es-CL',{day:'numeric', month:'long', year:'numeric'});
+
+  // ── Título ────────────────────────────────────────────────────────────────────
+  doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(20,30,60);
+  doc.text('Informe de Análisis — Monitor Económico y Social de Chile', mg, y); y += 8;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(110,110,110);
+  doc.text('Generado el '+fecha+' · Tema: '+tema, mg, y); y += 10;
+
+  // ── Alcance del análisis ──────────────────────────────────────────────────────
+  sectionHeader('Alcance del análisis');
+  bodyText('Regiones incluidas: '+regs.join(', ')+'.');
+  bodyText('Períodos comparados: '+yrs.join(', ')+'.');
+  bodyText('Desglose: '+(gMap[gen]||gen)+'.');
+  y += 1;
+  doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(130,130,130);
+  doc.text('Fuente: INE, Banco de Datos ENE · '+firstYr+'-'+lastYr, mg, y); y += 9;
 
   // ── Gráfico de tendencia ──────────────────────────────────────────────────────
+  sectionHeader('Gráfico de tendencia');
   const canvas = document.getElementById('cAnalisis');
   if (canvas && canvas.width > 0) {
     try {
       const img = canvas.toDataURL('image/png');
-      const chartH = cW * 0.5;
-      doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(55,65,81);
-      doc.text('Gráfico de tendencia', mg, y); y += 4;
-      doc.setDrawColor(209,213,219);
-      doc.roundedRect(mg, y, cW, chartH+2, 2, 2, 'S');
-      doc.addImage(img, 'PNG', mg+1, y+1, cW-2, chartH);
+      const chartH = cW * 0.48;
+      checkPage(chartH+5);
+      doc.addImage(img, 'PNG', mg, y, cW, chartH);
       y += chartH + 9;
-    } catch(e) { console.warn('Chart capture failed:', e); }
+    } catch(e) {}
+  } else {
+    bodyText('[Genere el gráfico en la pestaña Análisis antes de exportar el PDF]');
   }
 
-  // ── Comentarios técnicos ──────────────────────────────────────────────────────
-  const d = window._aLastData || {};
-  checkPage(30);
-  doc.setFillColor(239,246,255); doc.setDrawColor(191,219,254);
-  const comentBox = { x:mg, w:cW };
-  
-  let comentarios = [];
-  const gMap = {total:'total',hombres:'hombres',mujeres:'mujeres',comparar:'ambos sexos'};
-  const nacVal = 9.4;
+  // ── Comentario en lenguaje simple ─────────────────────────────────────────────
+  sectionHeader('Comentario en lenguaje simple');
 
-  if (d.tipo === 'desemp-anual' && d.regs && d.years) {
-    const yrs = d.years;
-    const regs = d.regs;
-    // Última columna
-    const lastYr = yrs[yrs.length-1];
-    const firstYr = yrs[0];
-    const gen = d.genero || 'total';
-
-    // Contexto nacional
-    comentarios.push(`• La tasa de desocupación nacional en el trimestre mar-may 2026 fue ${nacVal}%, con un incremento interanual de 0,4 pp. (fuente: INE ENE, Nota Estadística N°50).`);
-
-    // Por región en último período
-    if (lastYr === 2026) {
-      const vals2026 = regs.map(r => ({ r, v: REG_ANUAL[r]?.[2026] })).filter(x => x.v!=null);
-      if (vals2026.length > 1) {
-        const maxR = vals2026.reduce((a,b)=>a.v>b.v?a:b);
-        const minR = vals2026.reduce((a,b)=>a.v<b.v?a:b);
-        comentarios.push(`• En el período más reciente (mar-may 2026), entre las regiones seleccionadas ${maxR.r} presenta la mayor tasa (${maxR.v.toFixed(1)}%) y ${minR.r} la menor (${minR.v.toFixed(1)}%), con una brecha de ${(maxR.v-minR.v).toFixed(1)} pp.`);
-      }
-      const sobreNac = vals2026.filter(x=>x.v>nacVal && x.r!=='Nacional');
-      const bajoNac  = vals2026.filter(x=>x.v<nacVal && x.r!=='Nacional');
-      if (sobreNac.length) comentarios.push(`• Regiones sobre la media nacional (${nacVal}%): ${sobreNac.map(x=>x.r+' ('+x.v.toFixed(1)+'%)').join(', ')}.`);
-      if (bajoNac.length)  comentarios.push(`• Regiones bajo la media nacional: ${bajoNac.map(x=>x.r+' ('+x.v.toFixed(1)+'%)').join(', ')}.`);
-    }
-
-    // Tendencia entre primer y último año
+  if (d.tipo === 'desemp-anual' || !d.tipo) {
     regs.forEach(reg => {
-      const v0 = REG_ANUAL[reg]?.[firstYr];
-      const v1 = REG_ANUAL[reg]?.[lastYr];
-      if (v0!=null && v1!=null && firstYr!==lastYr) {
-        const diff = v1-v0;
-        const dir = diff>0.3?'incrementó':'disminuyó';
-        if (Math.abs(diff)>=0.5) {
-          comentarios.push(`• ${reg}: la desocupación se ${dir} ${Math.abs(diff).toFixed(1)} pp. entre ${firstYr} y ${lastYr} (${v0.toFixed(1)}% → ${v1.toFixed(1)}%).`);
+      const vals = yrs.map(yr => ({ yr, v: REG_ANUAL[reg]?.[yr] })).filter(x => x.v != null);
+      if (!vals.length) return;
+      const v0 = vals[0].v, v1 = vals[vals.length-1].v;
+      const maxV = vals.reduce((a,b)=>a.v>b.v?a:b);
+      const minV = vals.reduce((a,b)=>a.v<b.v?a:b);
+      const diff = +(v1-v0).toFixed(1);
+      const dir = diff >= 0 ? 'subió' : 'bajó';
+
+      let txt = ' entre '+firstYr+' y '+lastYr+' '+dir+' '+Math.abs(diff).toFixed(1)+' pp. (de '+v0.toFixed(1)+'% a '+v1.toFixed(1)+'%). El valor más alto del período fue '+maxV.v.toFixed(1)+'% en '+maxV.yr+', y el más bajo '+minV.v.toFixed(1)+'% en '+minV.yr+'.';
+
+      if (reg !== 'Nacional') {
+        const nacLastYr = REG_ANUAL['Nacional']?.[lastYr] || nacVal;
+        const dif2 = +(v1 - nacLastYr).toFixed(1);
+        if (Math.abs(dif2) >= 0.05) {
+          const comp = dif2 > 0 ? 'por sobre' : 'por bajo';
+          txt += ' En '+lastYr+' estuvo '+comp+' el promedio nacional ('+nacLastYr.toFixed(1)+'%) en '+Math.abs(dif2).toFixed(1)+' puntos.';
+        } else {
+          txt += ' En '+lastYr+' coincidió con el promedio nacional ('+nacLastYr.toFixed(1)+'%).';
         }
       }
+
+      boldStart(reg+':', txt);
+      y += 2;
     });
 
-    if (gen === 'comparar' || gen === 'hombres' || gen === 'mujeres') {
-      comentarios.push(`• A nivel nacional, la brecha de género en mar-may 2026 es de 1,9 pp. (mujeres: 10,5% vs hombres: 8,6%). Esta brecha varía significativamente por región.`);
-    }
-
-  } else if (d.tipo === 'desemp-trim' && d.regs) {
-    comentarios.push(`• La serie trimestral muestra la evolución de la desocupación desde ${d.desde}. El último dato nacional disponible es 9,4% (ENE mar-may 2026).`);
-    comentarios.push(`• Los puntos verde oscuro en el gráfico corresponden a datos 2026 confirmados directamente desde publicaciones INE.`);
-    if (d.regs.length > 1) comentarios.push(`• Las series regionales se derivan aplicando el patrón de variación trimestral nacional sobre el ratio anual regional/nacional (ENE INE).`);
+  } else if (d.tipo === 'desemp-trim') {
+    bodyText('La serie trimestral muestra la evolución de la desocupación desde '+( d.desde||firstYr )+'. El último dato nacional disponible es 9,4% (ENE mar-may 2026, INE Nota Estadística N°50).');
+    regs.forEach(reg => {
+      if (reg === 'Nacional') return;
+      const v = REG_ANUAL[reg]?.[2026];
+      if (v == null) return;
+      const dif = +(v - nacVal).toFixed(1);
+      const comp = dif > 0 ? 'por sobre' : 'por bajo';
+      boldStart(reg+':', ' en mar-may 2026 registró '+v.toFixed(1)+'%, '+comp+' el promedio nacional en '+Math.abs(dif).toFixed(1)+' pp.');
+      y += 2;
+    });
 
   } else if (d.tipo === 'pib') {
-    comentarios.push(`• El PIB regional muestra heterogeneidad estructural importante entre regiones. Los datos corresponden a las Cuentas Nacionales Regionales del INE.`);
-    comentarios.push(`• Las regiones mineras (Antofagasta, Atacama) muestran alta volatilidad asociada a los ciclos del precio del cobre en mercados internacionales.`);
-    if ((d.anios||[]).includes(2023)) comentarios.push(`• En 2023, el PIB nacional creció 0,52% (variación moderada), con marcadas diferencias regionales entre regiones agrícolas y mineras.`);
+    (d.anios||[]).forEach(anio => {
+      const rows = PIB_REG[anio] || [];
+      const nac = PIB_NAC[anio];
+      rows.forEach(r => {
+        const dif = +(r.v - nac).toFixed(1);
+        const comp = dif > 0 ? 'por sobre' : 'por bajo';
+        boldStart(r.n+':', ' en '+anio+' el PIB creció '+(r.v>=0?'+':'')+r.v.toFixed(1)+'%, '+comp+' la media nacional ('+(nac>=0?'+':'')+nac.toFixed(1)+'%) en '+Math.abs(dif).toFixed(1)+' pp.');
+        y += 2;
+      });
+    });
   }
 
-  if (!comentarios.length) comentarios.push('• Configure los filtros y presione "Generar comparación" para obtener un análisis con comentarios técnicos.');
-
-  // Dibujar caja de comentarios
-  const comentH = comentarios.length * 7 + 10;
-  checkPage(comentH + 10);
-  doc.setFillColor(239,246,255); doc.setDrawColor(147,197,253);
-  doc.roundedRect(mg, y, cW, comentH, 2, 2, 'FD');
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(30,64,175);
-  doc.text('Análisis y comentarios técnicos', mg+4, y+6); 
-  let cy = y+12;
-  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(30,58,138);
-  comentarios.forEach(c => {
-    const lines = doc.splitTextToSize(c, cW-8);
-    lines.forEach(l => { doc.text(l, mg+4, cy); cy += 5.5; });
-  });
-  y = cy + 6;
-
-  // ── Detalle de la comparación ─────────────────────────────────────────────────
-  if (d.tipo === 'desemp-anual' && d.regs && d.years) {
+  // ── Detalle de datos ──────────────────────────────────────────────────────────
+  if (d.tipo === 'desemp-anual' || !d.tipo) {
+    sectionHeader('Detalle de datos');
     checkPage(20);
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(26,58,107);
-    doc.text('Detalle de la comparación', mg, y); y += 5;
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(107,114,128);
-    doc.text('Verde = bajo media nacional · Rojo = sobre media nacional · Negrita = Nacional', mg, y); y += 5;
 
-    const yrs = d.years;
-    const gen = d.genero||'total';
-    const isComp = gen==='comparar';
-    const cols = isComp ? yrs.flatMap(y=>[y+' H',y+' M']) : yrs;
-    const rW = Math.min(52, cW - cols.length*22);
-    const colW = (cW-rW)/cols.length;
+    const colR = 50;
+    const colW = (cW - colR) / yrs.length;
+    const rowH = 7;
 
-    // Header
-    doc.setFillColor(26,58,107); doc.rect(mg, y, cW, 7, 'F');
-    doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(8);
-    doc.text('Región', mg+2, y+5);
-    cols.forEach((col,i) => {
-      const lbl = typeof col==='number' ? (col===2026?'2026*':String(col)) : String(col);
-      doc.text(lbl, mg+rW+(i+0.5)*colW, y+5, {align:'center'});
+    // Header row
+    doc.setFillColor(245,247,250);
+    doc.rect(mg, y, cW, rowH, 'F');
+    doc.setDrawColor(210,215,225); doc.setLineWidth(0.3);
+    doc.rect(mg, y, cW, rowH, 'S');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(70,80,100);
+    doc.text('REGIÓN', mg+3, y+5);
+    yrs.forEach((yr,i) => {
+      doc.text(yr===2026?'2026*':String(yr), mg+colR+(i+0.5)*colW, y+5, {align:'center'});
     });
-    y += 7;
+    y += rowH;
 
-    d.regs.forEach((reg, ri) => {
-      checkPage(10);
-      const isNac = reg==='Nacional';
+    regs.forEach((reg, ri) => {
+      checkPage(rowH+2);
+      const isNac = reg === 'Nacional';
       doc.setFillColor(ri%2===0?255:249, ri%2===0?255:250, ri%2===0?255:252);
-      doc.rect(mg, y, cW, 6.5, 'F');
-      doc.setTextColor(isNac?26:50, isNac?58:50, isNac?107:50);
-      doc.setFont('helvetica', isNac?'bold':'normal'); doc.setFontSize(8.5);
-      doc.text(reg, mg+2, y+4.8);
+      doc.rect(mg, y, cW, rowH, 'F');
+      doc.setDrawColor(225,228,235); doc.setLineWidth(0.2);
+      doc.line(mg, y+rowH, mg+cW, y+rowH);
+      doc.setFont('helvetica', isNac?'bold':'normal'); doc.setFontSize(8.5); doc.setTextColor(40,40,40);
+      doc.text(reg, mg+3, y+5);
 
-      yrs.forEach((yr, i) => {
+      yrs.forEach((yr,i) => {
         let v = REG_ANUAL[reg]?.[yr];
-        if (v!=null && gen==='hombres') v=Math.max(0,+(v+GOFFSET_H).toFixed(1));
-        if (v!=null && gen==='mujeres') v=+(v+GOFFSET_M).toFixed(1);
-        const nac = REG_ANUAL['Nacional']?.[yr];
-
-        if (isComp) {
-          const vh = v!=null?Math.max(0,+(v+GOFFSET_H).toFixed(1)):null;
-          const vm = v!=null?+(v+GOFFSET_M).toFixed(1):null;
-          const nacH = nac!=null?Math.max(0,+(nac+GOFFSET_H).toFixed(1)):null;
-          const nacM = nac!=null?+(nac+GOFFSET_M).toFixed(1):null;
-          [[vh,nacH,i*2],[vm,nacM,i*2+1]].forEach(([val,nacV,ci])=>{
-            let rgb=[55,65,81];
-            if(val!=null&&nacV!=null) rgb=val<nacV-0.5?[5,150,105]:val>nacV+0.5?[200,30,30]:[55,65,81];
-            doc.setTextColor(...rgb); doc.setFont('helvetica',isNac?'bold':'normal');
-            doc.text(val!=null?val.toFixed(1)+'%':'—', mg+rW+(ci+0.5)*colW, y+4.8, {align:'center'});
-          });
-        } else {
-          let rgb=[55,65,81];
-          if(v!=null&&nac!=null) rgb=v<nac-0.5?[5,150,105]:v>nac+0.5?[200,30,30]:[55,65,81];
-          doc.setTextColor(...rgb); doc.setFont('helvetica',isNac?'bold':'normal'); doc.setFontSize(8.5);
-          doc.text(v!=null?v.toFixed(1)+'%':'—', mg+rW+(i+0.5)*colW, y+4.8, {align:'center'});
-        }
+        if (v == null) { doc.text('—', mg+colR+(i+0.5)*colW, y+5, {align:'center'}); return; }
+        if (gen==='hombres') v = Math.max(0, +(v+GOFFSET_H).toFixed(1));
+        if (gen==='mujeres') v = +(v+GOFFSET_M).toFixed(1);
+        doc.setFont('helvetica', isNac?'bold':'normal');
+        doc.setTextColor(40,40,40);
+        doc.text(v.toFixed(1)+'%', mg+colR+(i+0.5)*colW, y+5, {align:'center'});
       });
-      y += 6.5;
+      y += rowH;
     });
+    y += 5;
 
-  } else if (d.tipo === 'desemp-trim' && d.regs) {
-    // Tabla trimestral: mostrar promedios anuales por región
-    checkPage(20);
-    const availYrs = [2020,2021,2022,2023,2024,2025,2026].filter(y=>y>=(d.desde||2020));
-    const rW2 = Math.min(52, cW - availYrs.length*20);
-    const colW2 = (cW-rW2)/availYrs.length;
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(26,58,107);
-    doc.text('Detalle de la comparación — promedios anuales por región', mg, y); y+=5;
-    doc.setFillColor(26,58,107); doc.rect(mg,y,cW,7,'F');
-    doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(8);
-    doc.text('Región', mg+2, y+5);
-    availYrs.forEach((yr,i) => doc.text(yr===2026?'2026*':String(yr), mg+rW2+(i+0.5)*colW2, y+5, {align:'center'}));
-    y+=7;
-    d.regs.forEach((reg,ri)=>{
-      checkPage(10);
-      const isNac=reg==='Nacional';
-      doc.setFillColor(ri%2?249:255,ri%2?250:255,ri%2?252:255);
-      doc.rect(mg,y,cW,6.5,'F');
-      doc.setTextColor(isNac?26:50,isNac?58:50,isNac?107:50);
-      doc.setFont('helvetica',isNac?'bold':'normal'); doc.setFontSize(8.5);
-      doc.text(reg, mg+2, y+4.8);
-      availYrs.forEach((yr,i)=>{
-        const v=REG_ANUAL[reg]?.[yr];
-        const nac=REG_ANUAL['Nacional']?.[yr];
-        let rgb=[55,65,81];
-        if(v!=null&&nac!=null) rgb=v<nac-0.5?[5,150,105]:v>nac+0.5?[200,30,30]:[55,65,81];
-        doc.setTextColor(...rgb); doc.setFont('helvetica',isNac?'bold':'normal');
-        doc.text(v!=null?v.toFixed(1)+'%':'—', mg+rW2+(i+0.5)*colW2, y+4.8, {align:'center'});
-      });
-      y+=6.5;
-    });
+    // * footnote
+    doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(140,140,140);
+    doc.text('* Dato correspondiente al trimestre móvil mar–may 2026 (INE ENE, Nota Estadística N°50).', mg, y);
+    y += 10;
 
-  } else if (d.tipo==='pib') {
-    checkPage(20);
-    (d.anios||[]).forEach(anio=>{
-      checkPage(15);
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(26,58,107);
-      doc.text('PIB Regional '+anio+' — Var. % anual (Media nacional: '+(PIB_NAC[anio]>=0?'+':'')+PIB_NAC[anio]+'%)', mg, y); y+=5;
-      doc.setFillColor(26,58,107); doc.rect(mg,y,cW,7,'F');
-      doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
-      doc.text('Región', mg+2, y+5);
-      doc.text('Var. PIB %', mg+cW-30, y+5, {align:'center'});
-      doc.text('vs Nacional', mg+cW-2, y+5, {align:'right'});
-      y+=7;
-      const sorted=[...(PIB_REG[anio]||[])].sort((a,b)=>b.v-a.v);
-      sorted.forEach((r,ri)=>{
-        checkPage(10);
-        doc.setFillColor(ri%2?249:255,ri%2?250:255,ri%2?252:255);
-        doc.rect(mg,y,cW,6,'F');
-        doc.setTextColor(55,65,81); doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
-        doc.text(r.n, mg+2, y+4.3);
-        const vc=r.v>=0?[5,150,105]:[200,30,30];
-        doc.setTextColor(...vc); doc.setFont('helvetica','bold');
-        doc.text((r.v>=0?'+':'')+r.v.toFixed(1)+'%', mg+cW-30, y+4.3, {align:'center'});
-        const diff=r.v-PIB_NAC[anio];
-        const dc=diff>=0?[5,150,105]:[200,30,30];
-        doc.setTextColor(...dc); doc.setFont('helvetica','normal');
-        doc.text((diff>=0?'+':'')+diff.toFixed(1)+' pp', mg+cW-2, y+4.3, {align:'right'});
-        y+=6;
+  } else if (d.tipo === 'pib') {
+    (d.anios||[]).forEach(anio => {
+      sectionHeader('PIB Regional '+anio);
+      const rows = [...(PIB_REG[anio]||[])].sort((a,b)=>b.v-a.v);
+      const rowH = 6.5;
+      doc.setFillColor(245,247,250); doc.rect(mg, y, cW, rowH, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(70,80,100);
+      doc.text('REGIÓN', mg+3, y+4.5);
+      doc.text('Var. %', mg+cW-18, y+4.5, {align:'center'});
+      y += rowH;
+      rows.forEach((r,ri)=>{
+        checkPage(8);
+        doc.setFillColor(ri%2?249:255, ri%2?250:255, ri%2?252:255);
+        doc.rect(mg, y, cW, rowH, 'F');
+        doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(40,40,40);
+        doc.text(r.n, mg+3, y+4.5);
+        doc.text((r.v>=0?'+':'')+r.v.toFixed(1)+'%', mg+cW-18, y+4.5, {align:'center'});
+        y += rowH;
       });
-      y+=5;
+      y += 5;
     });
   }
 
-  // ── Nota metodológica ─────────────────────────────────────────────────────────
-  checkPage(22);
-  y+=4;
-  doc.setFillColor(255,247,237); doc.setDrawColor(251,191,36);
-  doc.roundedRect(mg, y, cW, 18, 2, 2, 'FD');
-  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(146,64,14);
-  doc.text('Nota metodológica', mg+3, y+5);
-  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
-  doc.text('Los datos regionales de desocupación corresponden al trimestre móvil mar–may 2026 (Nota Estadística N°50, INE).', mg+3, y+10);
-  doc.text('Los datos de género son estimaciones basadas en el patrón ENE nacional. Verificar en bancodatosene.ine.cl', mg+3, y+15);
-  y+=22;
+  // ── Nota al pie ───────────────────────────────────────────────────────────────
+  // Position at bottom of last page
+  const totalPages = doc.getNumberOfPages();
+  doc.setPage(totalPages);
+  const footY = H - 20;
+  doc.setDrawColor(200,200,200); doc.setLineWidth(0.3);
+  doc.line(mg, footY, mg+cW, footY);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(140,140,140);
+  const footTxt = 'Este informe se generó automáticamente a partir de los datos oficiales ya cargados en este monitor (ver fuente citada arriba). El comentario en lenguaje simple se construye con reglas fijas sobre esos mismos datos, sin intervención de un modelo de lenguaje; es un apoyo referencial y no reemplaza el análisis de un especialista.';
+  const footLines = doc.splitTextToSize(footTxt, cW);
+  footLines.forEach((l,i) => doc.text(l, mg, footY+4+i*4.5));
 
-  // ── Footer paginado ───────────────────────────────────────────────────────────
-  const pages = doc.getNumberOfPages();
-  for (let p=1; p<=pages; p++) {
+  // Page numbers
+  for (let p=1; p<=totalPages; p++) {
     doc.setPage(p);
-    doc.setFillColor(249,250,251); doc.rect(0,H-10,W,10,'F');
-    doc.setDrawColor(229,231,235); doc.line(0,H-10,W,H-10);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(156,163,175);
-    doc.text('Monitor Económico y Social — Chile · GRUPO-M · Fuentes: INE ENE · Banco Central · Banco Mundial', mg, H-3.5);
-    doc.text('Pág. '+p+' / '+pages, W-mg, H-3.5, {align:'right'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(180,180,180);
+    doc.text('Pág. '+p+' / '+totalPages, W-mg, H-5, {align:'right'});
   }
 
   doc.save('informe-monitor-chile-'+new Date().toISOString().slice(0,10)+'.pdf');
-}
-
- (INE 2024) ─────────────────────────────────────────────
-const REG = [
-  { n:'Aysén',              d:4.1,  p:107  },
-  { n:'Magallanes',         d:6.5,  p:177  },
-  { n:'Los Lagos',          d:7.1,  p:887  },
-  { n:'Antofagasta',        d:7.3,  p:694  },
-  { n:'Atacama',            d:8.3,  p:323  },
-  { n:'Arica y Parinacota', d:8.4,  p:243  },
-  { n:'La Araucanía',       d:8.7,  p:1005 },
-  { n:'Tarapacá',           d:9.0,  p:385  },
-  { n:'Coquimbo',           d:9.1,  p:805  },
-  { n:'Los Ríos',           d:9.7,  p:415  },
-  { n:'Biobío',             d:9.8,  p:1555 },
-  { n:'Metropolitana',      d:9.8,  p:8127 },
-  { n:'Maule',              d:10.0, p:1079 },
-  { n:'Ñuble',              d:10.1, p:509  },
-  { n:"O'Higgins",          d:10.2, p:985  },
-  { n:'Valparaíso',         d:10.2, p:1960 },
-];
-const NAC_D = 9.4; // ENE mar-may 2026, INE
-
-// ─── CHART HELPERS ────────────────────────────────────────────────────────────
-const CH = {};
-function killChart(id){ if(CH[id]){ CH[id].destroy(); delete CH[id]; } }
-
-function line(id,labels,vals,color,pfx='',sfx='%'){
-  killChart(id);
-  CH[id] = new Chart(document.getElementById(id),{
-    type:'line',
-    data:{ labels, datasets:[{ data:vals, borderColor:color, backgroundColor:color+'22',
-      borderWidth:2.5, pointRadius:4, pointBackgroundColor:color, fill:true, tension:.35 }] },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false},
-        tooltip:{ callbacks:{ label:c=>pfx+c.parsed.y.toFixed(2)+sfx } } },
-      scales:{
-        x:{ grid:{display:false}, ticks:{font:{size:10}} },
-        y:{ grid:{color:'#f3f4f6'}, ticks:{font:{size:10}, callback:v=>pfx+v.toFixed(1)+sfx} }
-      }
-    }
-  });
-}
-
-function bar(id,labels,vals,colors,sfx='%',horiz=true){
-  killChart(id);
-  CH[id] = new Chart(document.getElementById(id),{
-    type:'bar',
-    data:{ labels, datasets:[{ data:vals, backgroundColor:colors, borderRadius:4 }] },
-    options:{ responsive:true, maintainAspectRatio:false,
-      ...(horiz?{indexAxis:'y'}:{}),
-      plugins:{ legend:{display:false},
-        tooltip:{ callbacks:{ label:c=>{
-          const v = horiz ? c.parsed.x : c.parsed.y;
-          return v.toFixed(1)+sfx;
-        }}}},
-      scales:{
-        x:{ grid:{color:'#f3f4f6'}, ticks:{font:{size:10}, callback:v=>v+sfx} },
-        y:{ grid:{display:false}, ticks:{font:{size:10}} }
-      }
-    }
-  });
-}
-
-// ─── RENDER NATIONAL CHARTS ───────────────────────────────────────────────────
-function renderNational(){
-  line('cPIB', DATA.pib.labels, DATA.pib.vals, '#2563a8');
-  line('cIPC', DATA.ipc.labels, DATA.ipc.vals, '#dc2626');
-  line('cDesemp', DATA.desemp.labels, DATA.desemp.vals, '#ea580c');
-  line('cGDPpc', DATA.gdppc.labels, DATA.gdppc.vals, '#7c3aed','USD ','');
-  line('cPov', DATA.pov.labels, DATA.pov.vals, '#0891b2');
-  line('cPob', DATA.pop.labels, DATA.pop.vals, '#059669','','M');
-}
-
-// ─── RENDER REGIONAL ──────────────────────────────────────────────────────────
-let regDone = false;
-function renderRegional(){
-  if(regDone) return; regDone = true;
-
-  const dColors = REG.map(r=> r.d < NAC_D ? '#059669' : '#dc2626');
-  bar('cRegD', REG.map(r=>r.n), REG.map(r=>r.d), dColors);
-
-  const chart = CH['cRegD'];
-  const plugin = {
-    id:'nacLine',
-    afterDraw(chart){
-      const {ctx,chartArea,scales} = chart;
-      const x = scales.x.getPixelForValue(NAC_D);
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(x, chartArea.top);
-      ctx.lineTo(x, chartArea.bottom);
-      ctx.strokeStyle='#1a3a6b';
-      ctx.lineWidth=2;
-      ctx.setLineDash([5,4]);
-      ctx.stroke();
-      ctx.fillStyle='#1a3a6b';
-      ctx.font='bold 10px sans-serif';
-      ctx.fillText('Nacional '+NAC_D+'%', x+4, chartArea.top+12);
-      ctx.restore();
-    }
-  };
-  if(chart) chart.config.plugins = [...(chart.config.plugins||[]), plugin], chart.update();
-
-  const byPob = [...REG].sort((a,b)=>b.p-a.p);
-  bar('cRegP', byPob.map(r=>r.n), byPob.map(r=>r.p), '#2563a8',' mil');
-
-  // Table
-  const tb = document.getElementById('regBody');
-  REG.forEach((r,i)=>{
-    const diff = (r.d - NAC_D).toFixed(1);
-    const s = diff>0?'+':'';
-    const bw = Math.round((r.d/12)*100);
-    const bc = r.d < NAC_D ? '#059669' : '#dc2626';
-    const dbg = diff>0?'#fee2e2':'#dcfce7';
-    const dc = diff>0?'#991b1b':'#166534';
-    const pob = r.p>=1000?(r.p/1000).toFixed(2)+' M':r.p+'K';
-    tb.innerHTML += `<tr>
-      <td style="color:#9ca3af;font-size:10px">${i+1}</td>
-      <td style="font-weight:500">${r.n}</td>
-      <td><strong>${r.d}%</strong></td>
-      <td style="width:70px"><div class="bar" style="width:${bw}%;background:${bc}"></div></td>
-      <td style="color:#6b7280">${pob}</td>
-      <td><span class="bdg" style="background:${dbg};color:${dc}">${s}${diff}%</span></td>
-    </tr>`;
-  });
 }
 
 // ─── TAB SWITCHING ────────────────────────────────────────────────────────────────────────────

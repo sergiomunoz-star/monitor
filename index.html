@@ -1432,73 +1432,93 @@ function generarInformePDF() {
     });
   }
 
-  // ── Detalle de datos ──────────────────────────────────────────────────────────
+  // ── Detalle de la comparación ──────────────────────────────────────────────────
   if (d.tipo === 'desemp-anual' || !d.tipo) {
-    sectionHeader('Detalle de datos');
-    checkPage(20);
+    checkPage(22);
+    sectionHeader('Detalle de la comparación');
 
-    const colR = 50;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(130,130,130);
+    doc.text('Verde = bajo media nacional · Rojo = sobre media nacional · Negrita = Nacional', mg, y);
+    y += 6;
+
+    const yrs = d.years || [2026];
+    const regs = d.regs || ['Nacional'];
+    const gen = d.genero || 'total';
+
+    const colR = 48;
     const colW = (cW - colR) / yrs.length;
     const rowH = 7;
 
-    // Header row
+    // Header
     doc.setFillColor(245,247,250);
     doc.rect(mg, y, cW, rowH, 'F');
-    doc.setDrawColor(210,215,225); doc.setLineWidth(0.3);
-    doc.rect(mg, y, cW, rowH, 'S');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(70,80,100);
-    doc.text('REGIÓN', mg+3, y+5);
-    yrs.forEach((yr,i) => {
-      doc.text(yr===2026?'2026*':String(yr), mg+colR+(i+0.5)*colW, y+5, {align:'center'});
+    doc.setDrawColor(209,213,219); doc.setLineWidth(0.3);
+    doc.line(mg, y+rowH, mg+cW, y+rowH);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(100,110,130);
+    doc.text('Región', mg+3, y+5);
+    yrs.forEach((yr, i) => {
+      const lbl = yr === 2026 ? '2026*' : String(yr);
+      doc.text(lbl, mg+colR+(i+0.5)*colW, y+5, {align:'center'});
     });
     y += rowH;
 
     regs.forEach((reg, ri) => {
       checkPage(rowH+2);
       const isNac = reg === 'Nacional';
-      doc.setFillColor(ri%2===0?255:249, ri%2===0?255:250, ri%2===0?255:252);
+      doc.setFillColor(ri%2===0 ? 255 : 249, ri%2===0 ? 255 : 250, ri%2===0 ? 255 : 252);
       doc.rect(mg, y, cW, rowH, 'F');
-      doc.setDrawColor(225,228,235); doc.setLineWidth(0.2);
+      doc.setDrawColor(235,237,240); doc.setLineWidth(0.2);
       doc.line(mg, y+rowH, mg+cW, y+rowH);
-      doc.setFont('helvetica', isNac?'bold':'normal'); doc.setFontSize(8.5); doc.setTextColor(40,40,40);
+      doc.setFont('helvetica', isNac ? 'bold' : 'normal');
+      doc.setFontSize(8.5); doc.setTextColor(40,40,40);
       doc.text(reg, mg+3, y+5);
 
-      yrs.forEach((yr,i) => {
+      yrs.forEach((yr, i) => {
         let v = REG_ANUAL[reg]?.[yr];
-        if (v == null) { doc.text('—', mg+colR+(i+0.5)*colW, y+5, {align:'center'}); return; }
-        if (gen==='hombres') v = Math.max(0, +(v+GOFFSET_H).toFixed(1));
-        if (gen==='mujeres') v = +(v+GOFFSET_M).toFixed(1);
-        doc.setFont('helvetica', isNac?'bold':'normal');
-        doc.setTextColor(40,40,40);
+        if (v == null) { doc.setTextColor(180,180,180); doc.text('—', mg+colR+(i+0.5)*colW, y+5, {align:'center'}); return; }
+        if (gen === 'hombres') v = Math.max(0, +(v + GOFFSET_H).toFixed(1));
+        if (gen === 'mujeres') v = +(v + GOFFSET_M).toFixed(1);
+
+        const nacV = REG_ANUAL['Nacional']?.[yr];
+        let r=55,g=65,b=81;
+        if (!isNac && nacV != null) {
+          if (v < nacV - 0.05) { r=5; g=150; b=105; }      // green — below average
+          else if (v > nacV + 0.05) { r=220; g=38; b=38; }  // red — above average
+        }
+        doc.setTextColor(r,g,b);
+        doc.setFont('helvetica', isNac ? 'bold' : 'normal');
         doc.text(v.toFixed(1)+'%', mg+colR+(i+0.5)*colW, y+5, {align:'center'});
       });
       y += rowH;
     });
-    y += 5;
 
-    // * footnote
-    doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(140,140,140);
-    doc.text('* Dato correspondiente al trimestre móvil mar–may 2026 (INE ENE, Nota Estadística N°50).', mg, y);
-    y += 10;
+    y += 4;
+    doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(150,150,150);
+    doc.text('* Dato: trimestre móvil mar–may 2026 (INE ENE, Nota Estadística N°50, 30 jun 2026).', mg, y);
+    y += 8;
 
   } else if (d.tipo === 'pib') {
-    (d.anios||[]).forEach(anio => {
+    (d.anios || []).forEach(anio => {
+      checkPage(20);
       sectionHeader('PIB Regional '+anio);
       const rows = [...(PIB_REG[anio]||[])].sort((a,b)=>b.v-a.v);
-      const rowH = 6.5;
-      doc.setFillColor(245,247,250); doc.rect(mg, y, cW, rowH, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(70,80,100);
-      doc.text('REGIÓN', mg+3, y+4.5);
-      doc.text('Var. %', mg+cW-18, y+4.5, {align:'center'});
-      y += rowH;
+      const rowH2 = 6.5;
+      const colW2 = (cW-50)/2;
+      doc.setFillColor(245,247,250); doc.rect(mg,y,cW,rowH2,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(100,110,130);
+      doc.text('Región', mg+3, y+4.5);
+      doc.text('Var. %', mg+cW-20, y+4.5, {align:'center'});
+      y += rowH2;
       rows.forEach((r,ri)=>{
         checkPage(8);
-        doc.setFillColor(ri%2?249:255, ri%2?250:255, ri%2?252:255);
-        doc.rect(mg, y, cW, rowH, 'F');
+        doc.setFillColor(ri%2?249:255,ri%2?250:255,ri%2?252:255);
+        doc.rect(mg,y,cW,rowH2,'F');
         doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(40,40,40);
         doc.text(r.n, mg+3, y+4.5);
-        doc.text((r.v>=0?'+':'')+r.v.toFixed(1)+'%', mg+cW-18, y+4.5, {align:'center'});
-        y += rowH;
+        const vc = r.v>=0 ? [5,150,105] : [220,38,38];
+        doc.setTextColor(...vc); doc.setFont('helvetica','bold');
+        doc.text((r.v>=0?'+':'')+r.v.toFixed(1)+'%', mg+cW-20, y+4.5, {align:'center'});
+        y += rowH2;
       });
       y += 5;
     });

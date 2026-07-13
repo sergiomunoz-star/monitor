@@ -1281,8 +1281,25 @@ function _renderPibDetalleTable(anios) {
 
 // ─── GENERAR INFORME PDF ─────────────────────────────────────────────────────
 function generarInformePDF() {
+  // Load jsPDF dynamically if not yet available (requires internet)
+  if (!window.jspdf) {
+    const btn = event?.target;
+    if (btn) { btn.textContent = '⏳ Cargando PDF...'; btn.disabled = true; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = function() {
+      if (btn) { btn.textContent = '📄 Generar informe PDF'; btn.disabled = false; }
+      generarInformePDF();
+    };
+    s.onerror = function() {
+      if (btn) { btn.textContent = '📄 Generar informe PDF'; btn.disabled = false; }
+      alert('No se pudo cargar la librería PDF. Verifica tu conexión a internet e intenta nuevamente.');
+    };
+    document.head.appendChild(s);
+    return;
+  }
   const jspdf = window.jspdf;
-  if (!jspdf) { alert('Librería PDF no disponible. Verifica tu conexión.'); return; }
+  if (!jspdf) { alert('Librería PDF no disponible.'); return; }
   const { jsPDF } = jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
   const W=210, H=297, mg=18, cW=210-mg*2;

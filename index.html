@@ -129,7 +129,7 @@ body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backgr
 <script>
 /* MiniChart — Canvas-based Chart.js-compatible renderer */
 (function(G){'use strict';
-const FONT='11px system-ui,sans-serif';
+const FONT='13px system-ui,sans-serif';
 const TICK=5;
 
 function px2(s){
@@ -199,7 +199,7 @@ class MiniChart{
   _setup(){
     const cv=this.canvas;
     const par=cv.parentElement;
-    const dpr=window.devicePixelRatio||1;
+    const dpr=Math.max(window.devicePixelRatio||1, 2);
     const W=par?par.clientWidth||par.offsetWidth:cv.clientWidth||400;
     const H=par?par.clientHeight||par.offsetHeight:cv.clientHeight||220;
     if(!W||!H)return null;
@@ -221,10 +221,10 @@ class MiniChart{
     const legH=showLeg?22:0;
     // margins
     const mg={
-      t:legH+14,
-      r:isH?18:18,
-      b:isH?36:42,
-      l:isH?Math.max(90,Math.min(130,W*.28)):52
+      t:legH+18,
+      r:isH?22:22,
+      b:isH?42:48,
+      l:isH?Math.max(100,Math.min(140,W*.30)):62
     };
     const pX=mg.l,pY=mg.t,pW=W-mg.l-mg.r,pH=H-mg.t-mg.b;
     const ctx=this.ctx;
@@ -841,6 +841,7 @@ const ALL_REGS = ['Nacional','Arica y Parinacota','Tarapacá','Antofagasta','Ata
 const PALETTE  = ['#2563a8','#dc2626','#059669','#f59e0b','#7c3aed','#0891b2',
   '#ea580c','#65a30d','#db2777','#0d9488','#6d28d9','#b45309',
   '#be123c','#15803d','#1d4ed8','#64748b','#92400e'];
+const GOFFSET_H = -0.8, GOFFSET_M = 1.1;
 
 let _aLastData = {};
 

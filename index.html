@@ -195,13 +195,27 @@ class MiniChart{
   }
   update(){this._draw();}
   toBase64Image(){return this.canvas.toDataURL('image/png');}
+  renderHighRes(targetW, targetH){
+    const cv=this.canvas;
+    // Save originals
+    const ow=cv.width,oh=cv.height,osw=cv.style.width,osh=cv.style.height;
+    // Force high-res dimensions
+    cv._hrW=targetW; cv._hrH=targetH;
+    this._draw();
+    const url=cv.toDataURL('image/png',1.0);
+    // Restore
+    cv._hrW=undefined; cv._hrH=undefined;
+    cv.width=ow; cv.height=oh; cv.style.width=osw; cv.style.height=osh;
+    this._draw();
+    return url;
+  }
 
   _setup(){
     const cv=this.canvas;
     const par=cv.parentElement;
     const dpr=Math.max(window.devicePixelRatio||1, 2);
-    const W=par?par.clientWidth||par.offsetWidth:cv.clientWidth||400;
-    const H=par?par.clientHeight||par.offsetHeight:cv.clientHeight||220;
+    const W=cv._hrW||(par?par.clientWidth||par.offsetWidth:cv.clientWidth||400);
+    const H=cv._hrH||(par?par.clientHeight||par.offsetHeight:cv.clientHeight||220);
     if(!W||!H)return null;
     cv.width=Math.round(W*dpr);
     cv.height=Math.round(H*dpr);
@@ -1366,14 +1380,15 @@ function generarInformePDF() {
   // ── Gráfico de tendencia ──────────────────────────────────────────────────────
   sectionHeader('Gráfico de tendencia');
   const canvas = document.getElementById('cAnalisis');
-  if (canvas && canvas.width > 0) {
+  if (canvas && canvas.width > 0 && CH['cAnalisis']) {
     try {
-      const img = canvas.toDataURL('image/png');
+      // Render at high resolution for PDF quality
+      const img = CH['cAnalisis'].renderHighRes(1600, 700);
       const chartH = cW * 0.48;
       checkPage(chartH+5);
       doc.addImage(img, 'PNG', mg, y, cW, chartH);
       y += chartH + 9;
-    } catch(e) {}
+    } catch(e) { bodyText('[Error al capturar gráfico: ' + e.message + ']'); }
   } else {
     bodyText('[Genere el gráfico en la pestaña Análisis antes de exportar el PDF]');
   }
@@ -1434,20 +1449,22 @@ function generarInformePDF() {
   }
 
   // ── Detalle de la comparación ──────────────────────────────────────────────────
-  if (d.tipo === 'desemp-anual' || !d.tipo) {
-    checkPage(22);
+  if (d.tipo === 'desemp-anual' || d.tipo === 'desemp' || d.tipo === 'desemp-trim' || !d.tipo) {
+    // Always start table on a fresh page for clarity
+    doc.addPage(); y = mg;
     sectionHeader('Detalle de la comparación');
 
     doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(130,130,130);
     doc.text('Verde = bajo media nacional · Rojo = sobre media nacional · Negrita = Nacional', mg, y);
     y += 6;
 
-    const yrs = d.years || [2026];
-    const regs = d.regs || ['Nacional'];
-    const gen = d.genero || 'total';
+    // Use outer-scope vars (do NOT re-declare with const)
+    const tblYrs = (d.years && d.years.length) ? d.years : [2026];
+    const tblRegs = (d.regs && d.regs.length) ? d.regs : ['Nacional'];
+    const tblGen = d.genero || 'total';
 
     const colR = 48;
-    const colW = (cW - colR) / yrs.length;
+    const colW = (cW - colR) / tblYrs.length;
     const rowH = 7;
 
     // Header
@@ -1457,13 +1474,13 @@ function generarInformePDF() {
     doc.line(mg, y+rowH, mg+cW, y+rowH);
     doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(100,110,130);
     doc.text('Región', mg+3, y+5);
-    yrs.forEach((yr, i) => {
+    tblYrs.forEach((yr, i) => {
       const lbl = yr === 2026 ? '2026*' : String(yr);
       doc.text(lbl, mg+colR+(i+0.5)*colW, y+5, {align:'center'});
     });
     y += rowH;
 
-    regs.forEach((reg, ri) => {
+    tblRegs.forEach((reg, ri) => {
       checkPage(rowH+2);
       const isNac = reg === 'Nacional';
       doc.setFillColor(ri%2===0 ? 255 : 249, ri%2===0 ? 255 : 250, ri%2===0 ? 255 : 252);
@@ -1474,11 +1491,11 @@ function generarInformePDF() {
       doc.setFontSize(8.5); doc.setTextColor(40,40,40);
       doc.text(reg, mg+3, y+5);
 
-      yrs.forEach((yr, i) => {
+      tblYrs.forEach((yr, i) => {
         let v = REG_ANUAL[reg]?.[yr];
         if (v == null) { doc.setTextColor(180,180,180); doc.text('—', mg+colR+(i+0.5)*colW, y+5, {align:'center'}); return; }
-        if (gen === 'hombres') v = Math.max(0, +(v + GOFFSET_H).toFixed(1));
-        if (gen === 'mujeres') v = +(v + GOFFSET_M).toFixed(1);
+        if (tblGen === 'hombres') v = Math.max(0, +(v + GOFFSET_H).toFixed(1));
+        if (tblGen === 'mujeres') v = +(v + GOFFSET_M).toFixed(1);
 
         const nacV = REG_ANUAL['Nacional']?.[yr];
         let r=55,g=65,b=81;

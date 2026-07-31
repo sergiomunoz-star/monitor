@@ -186,12 +186,115 @@ class MiniChart{
     this.canvas=canvas;
     this.ctx=canvas.getContext('2d');
     this.cfg=cfg;
-    this.config=cfg; // alias
+    this.config=cfg;
+    this._hoverIdx=null;
+    this._layout=null;
+    this._onMove=this._handleMove.bind(this);
+    this._onLeave=this._handleLeave.bind(this);
+    canvas.addEventListener('mousemove',this._onMove);
+    canvas.addEventListener('mouseleave',this._onLeave);
     this._draw();
   }
   destroy(){
     const{canvas,ctx}=this;
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    canvas.removeEventListener('mousemove',this._onMove);
+    canvas.removeEventListener('mouseleave',this._onLeave);
+  }
+  _handleMove(e){
+    if(this.canvas._hrW)return;
+    const ly=this._layout;
+    if(!ly)return;
+    const rect=this.canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left;
+    const my=e.clientY-rect.top;
+    const{pX,pY,pW,pH,N,isH}=ly;
+    let idx=null;
+    if(isH){
+      // horizontal bar: detect row by y
+      if(mx>=pX-5&&mx<=pX+pW+5&&my>=pY&&my<=pY+pH){
+        idx=Math.max(0,Math.min(N-1,Math.floor((my-pY)/(pH/N))));
+      }
+    } else {
+      // line / vertical bar: detect column by x
+      if(mx>=pX-5&&mx<=pX+pW+5){
+        const step=N<2?pW:pW/(N-1);
+        idx=Math.max(0,Math.min(N-1,Math.round((mx-pX)/step)));
+      }
+    }
+    if(this._hoverIdx!==idx){this._hoverIdx=idx;this._draw();}
+  }
+  _handleLeave(){
+    if(this._hoverIdx!==null){this._hoverIdx=null;this._draw();}
+  }
+  _drawTooltip(){
+    const{ctx,cfg:{data,type,options={}},_layout:ly,_hoverIdx:idx}=this;
+    if(!ly||idx===null)return;
+    const{pX,pY,pW,pH,W,H,N,isH}=ly;
+    const lbls=data.labels;
+    const DS=data.datasets;
+    const label=String(lbls[idx]||'');
+    const entries=DS.map((ds,di)=>({
+      lbl:ds.label||('Serie '+(di+1)),
+      val:ds.data[idx],
+      col:brd(ds,0)
+    })).filter(e=>e.val!==null&&e.val!==undefined&&!isNaN(e.val));
+    if(!entries.length)return;
+    ctx.save();
+    // crosshair
+    let hx,hy;
+    if(isH){
+      hy=pY+idx*(pH/N)+(pH/N)/2;
+      ctx.strokeStyle='rgba(100,100,100,0.25)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+      ctx.beginPath();ctx.moveTo(pX,hy);ctx.lineTo(pX+pW,hy);ctx.stroke();
+    } else {
+      hx=N<2?pX+pW/2:pX+(idx/(N-1))*pW;
+      ctx.strokeStyle='rgba(100,100,100,0.25)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+      ctx.beginPath();ctx.moveTo(hx,pY);ctx.lineTo(hx,pY+pH);ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // tooltip box
+    const fnt='12px system-ui,sans-serif';
+    ctx.font=fnt;
+    const lnH=18,padX=10,padY=7;
+    const tw=ctx.measureText(label).width;
+    const mw=entries.reduce((a,e)=>{
+      const s=e.lbl+(typeof e.val==='number'?': '+e.val.toFixed(1)+'%':': '+e.val);
+      return Math.max(a,ctx.measureText(s).width);
+    },0);
+    const bW=Math.max(tw,mw)+padX*2+14;
+    const bH=(entries.length+1)*lnH+padY*2;
+    let bx,by;
+    if(isH){
+      bx=pX+pW*0.55; by=hy-bH/2;
+      if(bx+bW>W-5)bx=pX+5;
+    } else {
+      bx=hx+10; if(bx+bW>W-5)bx=hx-bW-10;
+      by=pY+8;   if(by+bH>H-5)by=H-bH-5;
+    }
+    // shadow + box
+    ctx.shadowColor='rgba(0,0,0,0.12)';ctx.shadowBlur=8;
+    ctx.fillStyle='rgba(255,255,255,0.97)';
+    if(ctx.roundRect){ctx.beginPath();ctx.roundRect(bx,by,bW,bH,6);ctx.fill();}
+    else{ctx.fillRect(bx,by,bW,bH);}
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='#d1d5db';ctx.lineWidth=1;
+    if(ctx.roundRect){ctx.beginPath();ctx.roundRect(bx,by,bW,bH,6);ctx.stroke();}
+    else{ctx.strokeRect(bx,by,bW,bH);}
+    // title
+    ctx.fillStyle='#1f2937';ctx.font='bold '+fnt;
+    ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText(label,bx+padX,by+padY);
+    // entries
+    entries.forEach((e,i)=>{
+      const ey=by+padY+lnH*(i+1);
+      ctx.fillStyle=e.col;
+      ctx.beginPath();ctx.arc(bx+padX+4,ey+6,4,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#374151';ctx.font=fnt;
+      const vs=typeof e.val==='number'?e.val.toFixed(1)+'%':String(e.val);
+      ctx.fillText((entries.length>1?e.lbl+': ':'')+vs,bx+padX+14,ey);
+    });
+    ctx.restore();
   }
   update(){this._draw();}
   toBase64Image(){return this.canvas.toDataURL('image/png');}
@@ -233,21 +336,19 @@ class MiniChart{
     const isH=type==='bar'&&options.indexAxis==='y';
     const showLeg=options.plugins?.legend?.display??data.datasets.length>1;
     const legH=showLeg?22:0;
-    // margins
-    const mg={
-      t:legH+18,
-      r:isH?22:22,
-      b:isH?42:48,
-      l:isH?Math.max(100,Math.min(140,W*.30)):62
-    };
+    const mg={t:legH+18,r:22,b:isH?42:48,l:isH?Math.max(100,Math.min(140,W*.30)):62};
     const pX=mg.l,pY=mg.t,pW=W-mg.l-mg.r,pH=H-mg.t-mg.b;
+    const N=data.labels.length;
+    this._layout={pX,pY,pW,pH,W,H,N,isH};
     const ctx=this.ctx;
     ctx.clearRect(0,0,W,H);
     if(showLeg)this._leg(W,legH);
     if(isH)this._hbar(pX,pY,pW,pH,options);
     else if(type==='line')this._line(pX,pY,pW,pH,options);
     else this._bar(pX,pY,pW,pH,options);
-    // custom plugins (draw after chart)
+    // tooltip
+    if(this._hoverIdx!==null&&!this.canvas._hrW)this._drawTooltip();
+    // custom plugins
     const plgs=this.cfg.options?.plugins?._custom||[];
     plgs.forEach(p=>{if(p&&typeof p.afterDraw==='function')p.afterDraw(this);});
   }
@@ -501,7 +602,7 @@ G.Chart=MiniChart;
     <div class="kpi o">
       <div class="kpi-lbl">Desempleo nacional ⭐</div>
       <div class="kpi-val">9.4<span class="kpi-u"> %</span></div>
-      <div class="kpi-sub">mar–may 2026 · ENE, INE</div>
+      <div class="kpi-sub">abr–jun 2026 · ENE, INE</div>
     </div>
     <div class="kpi r">
       <div class="kpi-lbl">IPC — Var. mensual ⭐</div>
@@ -521,7 +622,7 @@ G.Chart=MiniChart;
     <div class="kpi t">
       <div class="kpi-lbl">Informalidad laboral ⭐</div>
       <div class="kpi-val">27.0<span class="kpi-u"> %</span></div>
-      <div class="kpi-sub">mar–may 2026 · ENE, INE</div>
+      <div class="kpi-sub">abr–jun 2026 · ENE, INE</div>
     </div>
     <div class="kpi" style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-left:4px solid #0ea5e9;">
       <div class="kpi-lbl">TPM ⭐</div>
@@ -540,7 +641,7 @@ G.Chart=MiniChart;
     </div>
   </div>
   <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:7px;padding:9px 14px;font-size:11px;color:#166534;margin-bottom:14px;">
-    ⭐ <strong>Datos actualizados al 9 de julio 2026</strong> · Desempleo, IPC, Informalidad: INE (junio–julio 2026). TPM y PIB trimestral: Banco Central de Chile. PIB per cápita: Banco Central BDE (2025).
+    ⭐ <strong>Datos actualizados al 31 de julio 2026</strong> · Desempleo, IPC, Informalidad: INE (junio–julio 2026). TPM y PIB trimestral: Banco Central de Chile. PIB per cápita: Banco Central BDE (2025).
   </div>
 
   <div class="cg">
@@ -556,7 +657,7 @@ G.Chart=MiniChart;
     </div>
     <div class="cc">
       <div class="ct">Tasa de Desempleo (%) — con dato 2026</div>
-      <div class="cs">Fuente: Banco Mundial/OIT 2021–2025 + ENE INE mar-may 2026*</div>
+      <div class="cs">Fuente: Banco Mundial/OIT 2021–2025 + ENE INE abr-jun 2026*</div>
       <div class="cw"><canvas id="cDesemp"></canvas></div>
     </div>
     <div class="cc">
@@ -585,13 +686,13 @@ G.Chart=MiniChart;
 
   <div class="abox">
     📋 <strong>Fuente: INE — Encuesta Nacional de Empleo (ENE) y proyecciones de población 2024.</strong>
-    Los datos de desempleo regional corresponden al trimestre móvil mar-may 2026 (ENE, INE — Nota Estadística N°50). Media nacional: <strong>9.4%</strong>. Verde = bajo la media, Rojo = sobre la media.
+    Los datos de desempleo regional corresponden al trimestre móvil abr-jun 2026 (ENE, INE — Nota Estadística N°51). Media nacional: <strong>9.4%</strong>. Verde = bajo la media, Rojo = sobre la media.
   </div>
 
   <div class="cg">
     <div class="cc full">
-      <div class="ct">Tasa de Desocupación por Región — ENE mar-may 2026</div>
-      <div class="cs">Fuente: INE — ENE mar-may 2026 · Nota Estadística N°50. Línea = media nacional 9.4%</div>
+      <div class="ct">Tasa de Desocupación por Región — ENE abr-jun 2026</div>
+      <div class="cs">Fuente: INE — ENE abr-jun 2026 · Nota Estadística N°51. Línea = media nacional 9.4%</div>
       <div class="cw tall"><canvas id="cRegD"></canvas></div>
     </div>
   </div>
@@ -750,7 +851,7 @@ G.Chart=MiniChart;
 const DATA = {
   pib: { labels:['2017','2018','2019','2020','2021','2022','2023','2024'], vals:[2.79,4.00,0.99,-6.14,11.31,2.15,0.52,2.64] },
   ipc: { labels:['2020','2021','2022','2023','2024'], vals:[3.05,4.52,11.64,7.58,4.30] },
-  desemp: { labels:['2021','2022','2023','2024','2025','mar-may 2026*'], vals:[9.28,8.25,9.01,8.72,8.97,9.4] },
+  desemp: { labels:['2021','2022','2023','2024','2025','abr-jun 2026*'], vals:[9.28,8.25,9.01,8.72,8.97,9.4] },
   gdppc: { labels:['2017','2018','2019','2020','2021','2022','2023','2024'], vals:[14880,15659,14496,13115,16207,15406,17067,16710] },
   pov: { labels:['2013','2015','2017','2020','2022'], vals:[13.9,11.2,8.5,10.7,6.5] },
   pop: { labels:['2017','2018','2019','2020','2021','2022','2023','2024'], vals:[18.5,18.7,18.9,19.1,19.3,19.6,19.7,19.8] },
@@ -803,7 +904,7 @@ const TRIM_DESEMP = [
   { t:'dic-feb 2026', v:9.0,  y:2026, confirmed:true },
   { t:'ene-mar 2026', v:9.1,  y:2026, confirmed:true },
   { t:'feb-abr 2026', v:9.1,  y:2026, confirmed:true },
-  { t:'mar-may 2026', v:9.4,  y:2026, confirmed:true },
+  { t:'abr-jun 2026', v:9.4,  y:2026, confirmed:true },
 ];
 
 // ─── PIB REGIONAL DATA (INE — Cuentas Nacionales Regionales) ─────────────────
@@ -831,22 +932,22 @@ const PIB_NAC = { 2022:2.15, 2023:0.52 };
 // Fuente: INE ENE — estimaciones basadas en boletines publicados. Verificar en ine.gob.cl
 const REG_ANUAL = {
   'Nacional':           {2018:7.4,2019:7.2,2020:10.7,2021:9.3,2022:8.3,2023:9.0,2024:8.7,2025:9.0,2026:9.4},
-  'Arica y Parinacota':{2018:8.2,2019:8.4,2020:11.4,2021:10.1,2022:9.2,2023:9.8,2024:8.7,2025:9.1,2026:8.4},
-  'Tarapacá':          {2018:8.0,2019:8.1,2020:11.5,2021:9.8,2022:8.9,2023:9.5,2024:8.9,2025:9.1,2026:9.0},
-  'Antofagasta':       {2018:5.8,2019:5.6,2020:9.4,2021:7.8,2022:6.4,2023:7.1,2024:6.3,2025:6.5,2026:7.3},
-  'Atacama':           {2018:7.2,2019:7.5,2020:11.0,2021:9.3,2022:8.5,2023:9.1,2024:8.0,2025:8.2,2026:8.3},
-  'Coquimbo':          {2018:8.0,2019:8.2,2020:11.5,2021:10.1,2022:9.3,2023:9.9,2024:8.6,2025:8.9,2026:9.1},
-  'Valparaíso':        {2018:8.4,2019:8.5,2020:12.0,2021:10.2,2022:9.3,2023:10.1,2024:9.2,2025:9.4,2026:10.2},
-  "O'Higgins":         {2018:6.0,2019:6.2,2020:9.8,2021:8.2,2022:7.4,2023:8.0,2024:7.2,2025:7.5,2026:10.2},
-  'Maule':             {2018:6.5,2019:6.7,2020:10.3,2021:8.8,2022:8.0,2023:8.5,2024:7.7,2025:8.0,2026:10.0},
-  'Ñuble':             {2018:7.3,2019:7.5,2020:11.0,2021:9.3,2022:8.4,2023:9.0,2024:8.2,2025:8.4,2026:10.1},
-  'Biobío':            {2018:8.4,2019:8.7,2020:12.5,2021:10.6,2022:9.6,2023:10.4,2024:9.8,2025:10.1,2026:9.8},
-  'La Araucanía':      {2018:7.5,2019:7.7,2020:11.2,2021:9.5,2022:8.7,2023:9.3,2024:8.4,2025:8.6,2026:8.7},
-  'Los Ríos':          {2018:6.4,2019:6.6,2020:10.2,2021:8.6,2022:7.8,2023:8.3,2024:7.5,2025:7.7,2026:9.7},
-  'Los Lagos':         {2018:6.0,2019:6.2,2020:9.6,2021:8.0,2022:7.3,2023:7.8,2024:7.0,2025:7.2,2026:7.1},
-  'Aysén':             {2018:3.9,2019:4.1,2020:7.5,2021:6.0,2022:5.4,2023:6.0,2024:5.3,2025:5.6,2026:4.1},
-  'Magallanes':        {2018:4.4,2019:4.6,2020:8.2,2021:6.5,2022:5.8,2023:6.3,2024:5.6,2025:5.8,2026:6.5},
-  'Metropolitana':     {2018:7.4,2019:7.6,2020:11.8,2021:10.0,2022:9.1,2023:10.0,2024:9.6,2025:9.8,2026:9.8},
+  'Arica y Parinacota':{2018:8.2,2019:8.4,2020:11.4,2021:10.1,2022:9.2,2023:9.8,2024:8.7,2025:9.1,2026:9.6},
+  'Tarapacá':          {2018:8.0,2019:8.1,2020:11.5,2021:9.8,2022:8.9,2023:9.5,2024:8.9,2025:9.1,2026:8.0},
+  'Antofagasta':       {2018:5.8,2019:5.6,2020:9.4,2021:7.8,2022:6.4,2023:7.1,2024:6.3,2025:6.5,2026:6.2},
+  'Atacama':           {2018:7.2,2019:7.5,2020:11.0,2021:9.3,2022:8.5,2023:9.1,2024:8.0,2025:8.2,2026:9.0},
+  'Coquimbo':          {2018:8.0,2019:8.2,2020:11.5,2021:10.1,2022:9.3,2023:9.9,2024:8.6,2025:8.9,2026:9.2},
+  'Valparaíso':        {2018:8.4,2019:8.5,2020:12.0,2021:10.2,2022:9.3,2023:10.1,2024:9.2,2025:9.4,2026:10.4},
+  "O'Higgins":         {2018:6.0,2019:6.2,2020:9.8,2021:8.2,2022:7.4,2023:8.0,2024:7.2,2025:7.5,2026:10.4},
+  'Maule':             {2018:6.5,2019:6.7,2020:10.3,2021:8.8,2022:8.0,2023:8.5,2024:7.7,2025:8.0,2026:10.4},
+  'Ñuble':             {2018:7.3,2019:7.5,2020:11.0,2021:9.3,2022:8.4,2023:9.0,2024:8.2,2025:8.4,2026:10.5},
+  'Biobío':            {2018:8.4,2019:8.7,2020:12.5,2021:10.6,2022:9.6,2023:10.4,2024:9.8,2025:10.1,2026:10.4},
+  'La Araucanía':      {2018:7.5,2019:7.7,2020:11.2,2021:9.5,2022:8.7,2023:9.3,2024:8.4,2025:8.6,2026:10.1},
+  'Los Ríos':          {2018:6.4,2019:6.6,2020:10.2,2021:8.6,2022:7.8,2023:8.3,2024:7.5,2025:7.7,2026:10.2},
+  'Los Lagos':         {2018:6.0,2019:6.2,2020:9.6,2021:8.0,2022:7.3,2023:7.8,2024:7.0,2025:7.2,2026:7.2},
+  'Aysén':             {2018:3.9,2019:4.1,2020:7.5,2021:6.0,2022:5.4,2023:6.0,2024:5.3,2025:5.6,2026:4.6},
+  'Magallanes':        {2018:4.4,2019:4.6,2020:8.2,2021:6.5,2022:5.8,2023:6.3,2024:5.6,2025:5.8,2026:6.9},
+  'Metropolitana':     {2018:7.4,2019:7.6,2020:11.8,2021:10.0,2022:9.1,2023:10.0,2024:9.6,2025:9.8,2026:9.4},
 };
 const A_YEARS  = [2018,2019,2020,2021,2022,2023,2024,2025,2026];
 const ALL_REGS = ['Nacional','Arica y Parinacota','Tarapacá','Antofagasta','Atacama',
@@ -875,7 +976,7 @@ function initAnalisisPanel() {
   al.innerHTML = '';
   A_YEARS.forEach(y => {
     const chk = [2020,2022,2026].includes(y) ? 'checked' : '';
-    const lbl = y===2026 ? '2026 (mar-may)' : String(y);
+    const lbl = y===2026 ? '2026 (abr-jun)' : String(y);
     al.innerHTML += `<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;padding:1px 0;">
       <input type="checkbox" class="anioChk" value="${y}" ${chk}> ${lbl}</label>`;
   });
@@ -985,7 +1086,7 @@ function renderDesempAnual() {
   document.getElementById('aTitle').textContent = `Tasa de Desocupación (${gLabel}) — Vista Anual`;
   document.getElementById('aSrc').textContent = 'Fuente: INE — ENE. Promedios anuales estimados por región. Verificar en ine.gob.cl';
 
-  const strLabels = years.map(y => y===2026?'2026 (mar-may)':String(y));
+  const strLabels = years.map(y => y===2026?'2026 (abr-jun)':String(y));
   const allVals = datasets.flatMap(ds=>ds.data.filter(v=>v!==null));
   const minY = Math.max(0, Math.min(...allVals)-0.8), maxY = Math.max(...allVals)+0.8;
 
@@ -1419,31 +1520,31 @@ function generarInformePDF() {
   y+=4;
   doc.setDrawColor(200,205,215); doc.setLineWidth(0.2); doc.line(mg,y,mg+cW,y); y+=3;
   doc.setFont('helvetica','italic'); doc.setFontSize(6.5); doc.setTextColor(150,150,150);
-  doc.text('Fuente: INE — ENE. * Trimestre móvil mar–may 2026 (Nota Estadística N°50, 30 jun 2026). Generado por Monitor Económico GRUPO-M.', mg, y);
+  doc.text('Fuente: INE — ENE. * Trimestre móvil mar–may 2026 (Nota Estadística N°51, 30 jun 2026). Generado por Monitor Económico GRUPO-M.', mg, y);
 
   doc.save('informe-monitor-chile-'+new Date().toISOString().slice(0,10)+'.pdf');
 }
 
 
-// ─── DATOS REGIONALES ENE mar-may 2026 ─────────────────────────────────────────
+// ─── DATOS REGIONALES ENE abr-jun 2026 ─────────────────────────────────────────
 const NAC_D = 9.4;
 const REG = [
-  { n:'Aysén',              d:4.1,  p:107  },
-  { n:'Magallanes',         d:6.5,  p:177  },
-  { n:'Los Lagos',          d:7.1,  p:887  },
-  { n:'Antofagasta',        d:7.3,  p:694  },
-  { n:'Atacama',            d:8.3,  p:323  },
-  { n:'Arica y Parinacota', d:8.4,  p:243  },
-  { n:'La Araucanía',       d:8.7,  p:1005 },
-  { n:'Tarapacá',           d:9.0,  p:385  },
-  { n:'Coquimbo',           d:9.1,  p:805  },
-  { n:'Los Ríos',           d:9.7,  p:415  },
-  { n:'Biobío',             d:9.8,  p:1555 },
-  { n:'Metropolitana',      d:9.8,  p:8127 },
-  { n:'Maule',              d:10.0, p:1079 },
-  { n:'Ñuble',              d:10.1, p:509  },
-  { n:"O'Higgins",          d:10.2, p:985  },
-  { n:'Valparaíso',         d:10.2, p:1960 },
+  { n:'Aysén',              d:4.6,  p:107  },
+  { n:'Antofagasta',        d:6.2,  p:694  },
+  { n:'Magallanes',         d:6.9,  p:177  },
+  { n:'Los Lagos',          d:7.2,  p:887  },
+  { n:'Tarapacá',           d:8.0,  p:385  },
+  { n:'Atacama',            d:9.0,  p:323  },
+  { n:'Coquimbo',           d:9.2,  p:805  },
+  { n:'Metropolitana',      d:9.4,  p:8127 },
+  { n:'Arica y Parinacota', d:9.6,  p:243  },
+  { n:'La Araucanía',       d:10.1, p:1005 },
+  { n:'Los Ríos',           d:10.2, p:415  },
+  { n:'Biobío',             d:10.4, p:1555 },
+  { n:'Maule',              d:10.4, p:1079 },
+  { n:"O'Higgins",          d:10.4, p:985  },
+  { n:'Valparaíso',         d:10.4, p:1960 },
+  { n:'Ñuble',              d:10.5, p:509  },
 ];
 
 // ─── RENDER HELPERS ──────────────────────────────────────────────────────────────

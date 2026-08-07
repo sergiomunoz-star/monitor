@@ -239,6 +239,7 @@ class MiniChart{
       val:ds.data[idx],
       col:brd(ds,0)
     })).filter(e=>e.val!==null&&e.val!==undefined&&!isNaN(e.val));
+    const yFmtTip=this.cfg.options?.scales?.y?.ticks?.callback||(v=>typeof v==='number'?v.toFixed(1)+'%':v);
     if(!entries.length)return;
     ctx.save();
     // crosshair
@@ -291,7 +292,7 @@ class MiniChart{
       ctx.fillStyle=e.col;
       ctx.beginPath();ctx.arc(bx+padX+4,ey+6,4,0,Math.PI*2);ctx.fill();
       ctx.fillStyle='#374151';ctx.font=fnt;
-      const vs=typeof e.val==='number'?e.val.toFixed(1)+'%':String(e.val);
+      const vs=typeof e.val==='number'?String(yFmtTip(e.val)):String(e.val);
       ctx.fillText((entries.length>1?e.lbl+': ':'')+vs,bx+padX+14,ey);
     });
     ctx.restore();

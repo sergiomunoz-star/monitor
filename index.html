@@ -602,8 +602,8 @@ G.Chart=MiniChart;
   <div class="kpi-row">
     <div class="kpi o">
       <div class="kpi-lbl">Desempleo nacional ⭐</div>
-      <div class="kpi-val">9.4<span class="kpi-u"> %</span></div>
-      <div class="kpi-sub">abr–jun 2026 · ENE, INE</div>
+      <div class="kpi-val">9.5<span class="kpi-u"> %</span></div>
+      <div class="kpi-sub">may–jul 2026 · ENE, INE</div>
     </div>
     <div class="kpi r">
       <div class="kpi-lbl">IPC — Var. mensual ⭐</div>
@@ -622,8 +622,8 @@ G.Chart=MiniChart;
     </div>
     <div class="kpi t">
       <div class="kpi-lbl">Informalidad laboral ⭐</div>
-      <div class="kpi-val">27.0<span class="kpi-u"> %</span></div>
-      <div class="kpi-sub">abr–jun 2026 · ENE, INE</div>
+      <div class="kpi-val">26.5<span class="kpi-u"> %</span></div>
+      <div class="kpi-sub">may–jul 2026 · ENE, INE</div>
     </div>
     <div class="kpi" style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-left:4px solid #0ea5e9;">
       <div class="kpi-lbl">TPM ⭐</div>
@@ -642,7 +642,7 @@ G.Chart=MiniChart;
     </div>
   </div>
   <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:7px;padding:9px 14px;font-size:11px;color:#166534;margin-bottom:14px;">
-    ⭐ <strong>Datos actualizados al 1 de septiembre 2026</strong> · Desempleo: INE-ENE abr–jun 2026. IPC: INE julio 2026. IMACEC: Banco Central julio 2026. TPM y PIB: Banco Central de Chile. PIB per cápita: BDE (2025).
+    ⭐ <strong>Datos actualizados al 1 de septiembre 2026</strong> · Desempleo: INE-ENE may–jul 2026 (N°52). IPC: INE julio 2026. IMACEC: Banco Central julio 2026. TPM y PIB: Banco Central de Chile. PIB per cápita: BDE (2025).
   </div>
 
   <div class="cg">
@@ -658,7 +658,7 @@ G.Chart=MiniChart;
     </div>
     <div class="cc">
       <div class="ct">Tasa de Desempleo (%) — con dato 2026</div>
-      <div class="cs">Fuente: Banco Mundial/OIT 2021–2025 + ENE INE abr-jun 2026*</div>
+      <div class="cs">Fuente: Banco Mundial/OIT 2021–2025 + ENE INE may-jul 2026*</div>
       <div class="cw"><canvas id="cDesemp"></canvas></div>
     </div>
     <div class="cc">
@@ -687,13 +687,13 @@ G.Chart=MiniChart;
 
   <div class="abox">
     📋 <strong>Fuente: INE — Encuesta Nacional de Empleo (ENE) y proyecciones de población 2024.</strong>
-    Los datos de desempleo regional corresponden al trimestre móvil abr-jun 2026 (ENE, INE — Nota Estadística N°51). Media nacional: <strong>9.4%</strong>. Verde = bajo la media, Rojo = sobre la media.
+    Los datos de desempleo regional corresponden al trimestre móvil may-jul 2026 (ENE, INE — Nota Estadística N°52). Media nacional: <strong>9.5%</strong>. Verde = bajo la media, Rojo = sobre la media.
   </div>
 
   <div class="cg">
     <div class="cc full">
-      <div class="ct">Tasa de Desocupación por Región — ENE abr-jun 2026</div>
-      <div class="cs">Fuente: INE — ENE abr-jun 2026 · Nota Estadística N°51. Línea = media nacional 9.4%</div>
+      <div class="ct">Tasa de Desocupación por Región — ENE may-jul 2026</div>
+      <div class="cs">Fuente: INE — ENE may-jul 2026 · Nota Estadística N°52. Línea = media nacional 9.5%</div>
       <div class="cw tall"><canvas id="cRegD"></canvas></div>
     </div>
   </div>
@@ -852,7 +852,7 @@ G.Chart=MiniChart;
 const DATA = {
   pib: { labels:['2017','2018','2019','2020','2021','2022','2023','2024'], vals:[2.79,4.00,0.99,-6.14,11.31,2.15,0.52,2.64] },
   ipc: { labels:['2020','2021','2022','2023','2024'], vals:[3.05,4.52,11.64,7.58,4.30] },
-  desemp: { labels:['2021','2022','2023','2024','2025','abr-jun 2026*'], vals:[9.28,8.25,9.01,8.72,8.97,9.4] },
+  desemp: { labels:['2021','2022','2023','2024','2025','may-jul 2026*'], vals:[9.28,8.25,9.01,8.72,8.97,9.5] },
   gdppc: { labels:['2017','2018','2019','2020','2021','2022','2023','2024'], vals:[14880,15659,14496,13115,16207,15406,17067,16710] },
   pov: { labels:['2013','2015','2017','2020','2022'], vals:[13.9,11.2,8.5,10.7,6.5] },
   pop: { labels:['2017','2018','2019','2020','2021','2022','2023','2024'], vals:[18.5,18.7,18.9,19.1,19.3,19.6,19.7,19.8] },
@@ -906,6 +906,7 @@ const TRIM_DESEMP = [
   { t:'ene-mar 2026', v:9.1,  y:2026, confirmed:true },
   { t:'feb-abr 2026', v:9.1,  y:2026, confirmed:true },
   { t:'abr-jun 2026', v:9.4,  y:2026, confirmed:true },
+  { t:'may-jul 2026', v:9.5,  y:2026, confirmed:true },
 ];
 
 // ─── PIB REGIONAL DATA (INE — Cuentas Nacionales Regionales) ─────────────────
@@ -932,23 +933,23 @@ const PIB_NAC = { 2022:2.15, 2023:0.52 };
 // ─── DESOCUPACIÓN ANUAL POR REGIÓN (ENE, promedios estimados) ─────────────────
 // Fuente: INE ENE — estimaciones basadas en boletines publicados. Verificar en ine.gob.cl
 const REG_ANUAL = {
-  'Nacional':           {2018:7.4,2019:7.2,2020:10.7,2021:9.3,2022:8.3,2023:9.0,2024:8.7,2025:9.0,2026:9.4},
-  'Arica y Parinacota':{2018:8.2,2019:8.4,2020:11.4,2021:10.1,2022:9.2,2023:9.8,2024:8.7,2025:9.1,2026:9.6},
-  'Tarapacá':          {2018:8.0,2019:8.1,2020:11.5,2021:9.8,2022:8.9,2023:9.5,2024:8.9,2025:9.1,2026:8.0},
-  'Antofagasta':       {2018:5.8,2019:5.6,2020:9.4,2021:7.8,2022:6.4,2023:7.1,2024:6.3,2025:6.5,2026:6.2},
-  'Atacama':           {2018:7.2,2019:7.5,2020:11.0,2021:9.3,2022:8.5,2023:9.1,2024:8.0,2025:8.2,2026:9.0},
-  'Coquimbo':          {2018:8.0,2019:8.2,2020:11.5,2021:10.1,2022:9.3,2023:9.9,2024:8.6,2025:8.9,2026:9.2},
+  'Nacional':           {2018:7.4,2019:7.2,2020:10.7,2021:9.3,2022:8.3,2023:9.0,2024:8.7,2025:9.0,2026:9.5},
+  'Arica y Parinacota':{2018:8.2,2019:8.4,2020:11.4,2021:10.1,2022:9.2,2023:9.8,2024:8.7,2025:9.1,2026:10.0},
+  'Tarapacá':          {2018:8.0,2019:8.1,2020:11.5,2021:9.8,2022:8.9,2023:9.5,2024:8.9,2025:9.1,2026:7.8},
+  'Antofagasta':       {2018:5.8,2019:5.6,2020:9.4,2021:7.8,2022:6.4,2023:7.1,2024:6.3,2025:6.5,2026:6.5},
+  'Atacama':           {2018:7.2,2019:7.5,2020:11.0,2021:9.3,2022:8.5,2023:9.1,2024:8.0,2025:8.2,2026:9.1},
+  'Coquimbo':          {2018:8.0,2019:8.2,2020:11.5,2021:10.1,2022:9.3,2023:9.9,2024:8.6,2025:8.9,2026:9.5},
   'Valparaíso':        {2018:8.4,2019:8.5,2020:12.0,2021:10.2,2022:9.3,2023:10.1,2024:9.2,2025:9.4,2026:10.4},
-  "O'Higgins":         {2018:6.0,2019:6.2,2020:9.8,2021:8.2,2022:7.4,2023:8.0,2024:7.2,2025:7.5,2026:10.4},
-  'Maule':             {2018:6.5,2019:6.7,2020:10.3,2021:8.8,2022:8.0,2023:8.5,2024:7.7,2025:8.0,2026:10.4},
-  'Ñuble':             {2018:7.3,2019:7.5,2020:11.0,2021:9.3,2022:8.4,2023:9.0,2024:8.2,2025:8.4,2026:10.5},
-  'Biobío':            {2018:8.4,2019:8.7,2020:12.5,2021:10.6,2022:9.6,2023:10.4,2024:9.8,2025:10.1,2026:10.4},
-  'La Araucanía':      {2018:7.5,2019:7.7,2020:11.2,2021:9.5,2022:8.7,2023:9.3,2024:8.4,2025:8.6,2026:10.1},
-  'Los Ríos':          {2018:6.4,2019:6.6,2020:10.2,2021:8.6,2022:7.8,2023:8.3,2024:7.5,2025:7.7,2026:10.2},
-  'Los Lagos':         {2018:6.0,2019:6.2,2020:9.6,2021:8.0,2022:7.3,2023:7.8,2024:7.0,2025:7.2,2026:7.2},
-  'Aysén':             {2018:3.9,2019:4.1,2020:7.5,2021:6.0,2022:5.4,2023:6.0,2024:5.3,2025:5.6,2026:4.6},
-  'Magallanes':        {2018:4.4,2019:4.6,2020:8.2,2021:6.5,2022:5.8,2023:6.3,2024:5.6,2025:5.8,2026:6.9},
-  'Metropolitana':     {2018:7.4,2019:7.6,2020:11.8,2021:10.0,2022:9.1,2023:10.0,2024:9.6,2025:9.8,2026:9.4},
+  "O'Higgins":         {2018:6.0,2019:6.2,2020:9.8,2021:8.2,2022:7.4,2023:8.0,2024:7.2,2025:7.5,2026:10.5},
+  'Maule':             {2018:6.5,2019:6.7,2020:10.3,2021:8.8,2022:8.0,2023:8.5,2024:7.7,2025:8.0,2026:10.0},
+  'Ñuble':             {2018:7.3,2019:7.5,2020:11.0,2021:9.3,2022:8.4,2023:9.0,2024:8.2,2025:8.4,2026:11.0},
+  'Biobío':            {2018:8.4,2019:8.7,2020:12.5,2021:10.6,2022:9.6,2023:10.4,2024:9.8,2025:10.1,2026:10.6},
+  'La Araucanía':      {2018:7.5,2019:7.7,2020:11.2,2021:9.5,2022:8.7,2023:9.3,2024:8.4,2025:8.6,2026:10.0},
+  'Los Ríos':          {2018:6.4,2019:6.6,2020:10.2,2021:8.6,2022:7.8,2023:8.3,2024:7.5,2025:7.7,2026:10.6},
+  'Los Lagos':         {2018:6.0,2019:6.2,2020:9.6,2021:8.0,2022:7.3,2023:7.8,2024:7.0,2025:7.2,2026:7.7},
+  'Aysén':             {2018:3.9,2019:4.1,2020:7.5,2021:6.0,2022:5.4,2023:6.0,2024:5.3,2025:5.6,2026:4.0},
+  'Magallanes':        {2018:4.4,2019:4.6,2020:8.2,2021:6.5,2022:5.8,2023:6.3,2024:5.6,2025:5.8,2026:5.9},
+  'Metropolitana':     {2018:7.4,2019:7.6,2020:11.8,2021:10.0,2022:9.1,2023:10.0,2024:9.6,2025:9.8,2026:9.5},
 };
 const A_YEARS  = [2018,2019,2020,2021,2022,2023,2024,2025,2026];
 const ALL_REGS = ['Nacional','Arica y Parinacota','Tarapacá','Antofagasta','Atacama',
@@ -1521,31 +1522,31 @@ function generarInformePDF() {
   y+=4;
   doc.setDrawColor(200,205,215); doc.setLineWidth(0.2); doc.line(mg,y,mg+cW,y); y+=3;
   doc.setFont('helvetica','italic'); doc.setFontSize(6.5); doc.setTextColor(150,150,150);
-  doc.text('Fuente: INE — ENE. * Trimestre móvil mar–may 2026 (Nota Estadística N°51, 30 jun 2026). Generado por Monitor Económico GRUPO-M.', mg, y);
+  doc.text('Fuente: INE — ENE. * Trimestre móvil may–jul 2026 (Nota Estadística N°52, 28 ago 2026). Generado por Monitor Económico GRUPO-M.', mg, y);
 
   doc.save('informe-monitor-chile-'+new Date().toISOString().slice(0,10)+'.pdf');
 }
 
 
-// ─── DATOS REGIONALES ENE abr-jun 2026 ─────────────────────────────────────────
-const NAC_D = 9.4;
+// ─── DATOS REGIONALES ENE may-jul 2026 ─────────────────────────────────────────
+const NAC_D = 9.5;
 const REG = [
-  { n:'Aysén',              d:4.6,  p:107  },
-  { n:'Antofagasta',        d:6.2,  p:694  },
-  { n:'Magallanes',         d:6.9,  p:177  },
-  { n:'Los Lagos',          d:7.2,  p:887  },
-  { n:'Tarapacá',           d:8.0,  p:385  },
-  { n:'Atacama',            d:9.0,  p:323  },
-  { n:'Coquimbo',           d:9.2,  p:805  },
-  { n:'Metropolitana',      d:9.4,  p:8127 },
-  { n:'Arica y Parinacota', d:9.6,  p:243  },
-  { n:'La Araucanía',       d:10.1, p:1005 },
-  { n:'Los Ríos',           d:10.2, p:415  },
-  { n:'Biobío',             d:10.4, p:1555 },
-  { n:'Maule',              d:10.4, p:1079 },
-  { n:"O'Higgins",          d:10.4, p:985  },
+  { n:'Aysén',              d:4.0,  p:107  },
+  { n:'Magallanes',         d:5.9,  p:177  },
+  { n:'Antofagasta',        d:6.5,  p:694  },
+  { n:'Los Lagos',          d:7.7,  p:887  },
+  { n:'Tarapacá',           d:7.8,  p:385  },
+  { n:'Atacama',            d:9.1,  p:323  },
+  { n:'Coquimbo',           d:9.5,  p:805  },
+  { n:'Metropolitana',      d:9.5,  p:8127 },
+  { n:'Arica y Parinacota', d:10.0, p:243  },
+  { n:'La Araucanía',       d:10.0, p:1005 },
+  { n:'Maule',              d:10.0, p:1079 },
   { n:'Valparaíso',         d:10.4, p:1960 },
-  { n:'Ñuble',              d:10.5, p:509  },
+  { n:"O'Higgins",          d:10.5, p:985  },
+  { n:'Biobío',             d:10.6, p:1555 },
+  { n:'Los Ríos',           d:10.6, p:415  },
+  { n:'Ñuble',              d:11.0, p:509  },
 ];
 
 // ─── RENDER HELPERS ──────────────────────────────────────────────────────────────
